@@ -8,7 +8,6 @@ import org.json.JSONException;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.ListDataListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.LinkedList;
@@ -207,8 +206,9 @@ public class SettingsWindow {
     /**
      * Окончание редактирования/создания нового фильтра
      * Разблокирует окно настроек.
-     * @param filter    Обновлённый фильтр. Если null, то считается,
-     *                  что изменения были отклонены.
+     *
+     * @param filter Обновлённый фильтр. Если null, то считается,
+     *               что изменения были отклонены.
      */
     protected void doneFilterEditing(MailFilter filter) {
         if (filter != null)

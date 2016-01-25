@@ -2,13 +2,11 @@ package com.github.butterbrother.ews.redirector;
 
 import com.github.butterbrother.ews.redirector.filter.FilterRule;
 import com.github.butterbrother.ews.redirector.filter.MailFilter;
-import com.github.butterbrother.ews.redirector.graphics.TextPopup;
 import com.github.butterbrother.ews.redirector.graphics.TrayControl;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.awt.*;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -17,7 +15,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedList;
-import java.util.Set;
 
 /**
  * Хранит, загружает и сохраняет настройки
@@ -87,10 +84,11 @@ public class Settings {
 
     /**
      * Получение всех фильтров сообщений
-     * @param key   Ключ, под которым хранятся фильтры
-     * @return      Связанный список со всеми обнаруженными фильтрами.
-     *              Если произошла ошибка чтения/фильтров нет, то вернётся
-     *              пустой список
+     *
+     * @param key Ключ, под которым хранятся фильтры
+     * @return Связанный список со всеми обнаруженными фильтрами.
+     * Если произошла ошибка чтения/фильтров нет, то вернётся
+     * пустой список
      */
     public LinkedList<MailFilter> getAllFilters(String key) {
         LinkedList<MailFilter> filters = new LinkedList<>();
@@ -142,8 +140,9 @@ public class Settings {
 
     /**
      * Запись всх фильтров сообщений в файл конфигурации
-     * @param key       Ключ в файле настроек
-     * @param filters   Фильтры сообщений
+     *
+     * @param key     Ключ в файле настроек
+     * @param filters Фильтры сообщений
      */
     public void writeAllFilters(String key, LinkedList<MailFilter> filters) {
         JSONObject rawFilters = new JSONObject();

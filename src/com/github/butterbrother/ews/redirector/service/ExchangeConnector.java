@@ -22,12 +22,12 @@ public class ExchangeConnector {
     /**
      * Инициализация с проверкой учётных данных и возможности подключиться.
      *
-     * @param domain    Домен. Опционален.
-     * @param login     Логин
-     * @param password  Пароль
-     * @param email     e-mail. Используется только если указана необходимость автоматического определения EWS URL
-     * @param url       url EWS. Опционален. Если не указан - будет включено автоматическое определение
-     * @param enableAutodiscover    Необходимость автоматического определения EWS URL
+     * @param domain             Домен. Опционален.
+     * @param login              Логин
+     * @param password           Пароль
+     * @param email              e-mail. Используется только если указана необходимость автоматического определения EWS URL
+     * @param url                url EWS. Опционален. Если не указан - будет включено автоматическое определение
+     * @param enableAutodiscover Необходимость автоматического определения EWS URL
      * @throws Exception
      */
     protected ExchangeConnector(
@@ -42,7 +42,7 @@ public class ExchangeConnector {
 
         this.enableAutodiscover = enableAutodiscover;
         if (url.isEmpty() && !enableAutodiscover)
-                this.enableAutodiscover = true;
+            this.enableAutodiscover = true;
 
         if (domain.isEmpty()) {
             credentials = new WebCredentials(login, password);
@@ -69,7 +69,8 @@ public class ExchangeConnector {
      * Создаёт подключение к EWS.
      * Считается одиночным окном браузера, т.е. в один момент времени можно проводить
      * только одну операцию.
-     * @return              подключение к EWS
+     *
+     * @return подключение к EWS
      * @throws Exception
      */
     public ExchangeService createService() throws Exception {
@@ -88,7 +89,8 @@ public class ExchangeConnector {
 
     /**
      * Возвращает используемый URL
-     * @return  EWS URL
+     *
+     * @return EWS URL
      */
     public String getCurrentUrl() {
         return url.toString();

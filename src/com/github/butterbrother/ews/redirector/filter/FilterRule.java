@@ -45,7 +45,8 @@ public class FilterRule {
 
     /**
      * Инициализация правила
-     * @param rawRule   Строковое правило из таблицы
+     *
+     * @param rawRule Строковое правило из таблицы
      */
     public FilterRule(String[] rawRule) {
         System.out.print("DEBUG: creating rule. Data in array: ");
@@ -76,19 +77,20 @@ public class FilterRule {
 
     /**
      * Проверка выполнения правила для данных.
-     * @param data  Данные
-     * @return      Соответствие правилу фильтра
+     *
+     * @param data Данные
+     * @return Соответствие правилу фильтра
      */
     public boolean check(String data) {
         switch (ruleOperator) {
             case OPERATOR_EQUALS:
                 return data.equalsIgnoreCase(ruleValue);
             case OPERATOR_NOT_EQUALS:
-                return ! data.equalsIgnoreCase(ruleValue);
+                return !data.equalsIgnoreCase(ruleValue);
             case OPERATOR_CONTAINS:
                 return data.toLowerCase().contains(ruleValue);
             case OPERATOR_NOT_CONTAINS:
-                return ! data.toLowerCase().contains(ruleValue);
+                return !data.toLowerCase().contains(ruleValue);
         }
 
         return false;
@@ -96,15 +98,17 @@ public class FilterRule {
 
     /**
      * Созадёт представление для таблицы в интерфейсе, AWT/Swing
-     * @return  строка для таблицы из трёх столбцов
+     *
+     * @return строка для таблицы из трёх столбцов
      */
     public String[] getRuleView() {
-        return new String[] { RuleTypes[ruleType], RuleOperators[ruleOperator], ruleValue };
+        return new String[]{RuleTypes[ruleType], RuleOperators[ruleOperator], ruleValue};
     }
 
     /**
      * Получить тип правила
-     * @return  возвращает тип правила
+     *
+     * @return возвращает тип правила
      */
     public int getType() {
         return ruleType;

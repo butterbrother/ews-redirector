@@ -4,7 +4,7 @@ package com.github.butterbrother.ews.redirector.service;
  * Сервис с плавной остановкой
  */
 public abstract class SafeStopService
-        implements Runnable{
+        implements Runnable {
     private boolean active = true;
     private boolean done = false;
     private Thread currentThread = null;
@@ -20,7 +20,8 @@ public abstract class SafeStopService
 
     /**
      * Проверка активности сервиса
-     * @return  текущий статус
+     *
+     * @return текущий статус
      */
     public synchronized boolean isActive() {
         return active;
@@ -28,7 +29,8 @@ public abstract class SafeStopService
 
     /**
      * Проверка завершения работы сервиса
-     * @return  текущий статус
+     *
+     * @return текущий статус
      */
     public synchronized boolean isDone() {
         return done;

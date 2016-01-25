@@ -1,10 +1,10 @@
 package com.github.butterbrother.ews.redirector.graphics;
 
 import javax.swing.*;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.net.URL;
 
 /**
@@ -106,13 +106,18 @@ public class TrayControl {
     /**
      * Показывает сообщение из трея. Проброс из специального класса,
      * что бы не управлять треем напрямую.
-     * @param caption   заголовок
-     * @param text      текст сообщения
-     * @param type      тип сообщения
+     *
+     * @param caption заголовок
+     * @param text    текст сообщения
+     * @param type    тип сообщения
      */
     private void showPopup(String caption, String text, TrayIcon.MessageType type) {
         icon.displayMessage(caption, text, type);
         System.out.println("DEBUG: Tray control, show popup: [" + caption + "] " + text);
+    }
+
+    public TrayPopup getTrayPopup() {
+        return new TrayPopup();
     }
 
     /**
@@ -121,15 +126,12 @@ public class TrayControl {
     public class TrayPopup {
         /**
          * Показывает ошибку из трея
-         * @param caption   заголовок сообщения
-         * @param text      текст сообщения
+         *
+         * @param caption заголовок сообщения
+         * @param text    текст сообщения
          */
         public void error(String caption, String text) {
             showPopup(caption, text, TrayIcon.MessageType.ERROR);
         }
-    }
-
-    public TrayPopup getTrayPopup() {
-        return new TrayPopup();
     }
 }

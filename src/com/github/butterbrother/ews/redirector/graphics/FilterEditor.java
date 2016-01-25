@@ -16,6 +16,7 @@ import java.awt.event.WindowEvent;
  * Управление правилом фильтрации
  */
 public class FilterEditor {
+    private final SettingsWindow owner;
     private JPanel FilterEditorForm;
     private JLabel FilterNameLabel;
     private JTextField FilterNameInput;
@@ -35,7 +36,6 @@ public class FilterEditor {
     private JTable RulesTable;
     private DefaultTableModel RulesTableModel;
     private JFrame frame;
-    private final SettingsWindow owner;
     private int rowHeight = 0;
 
     /**

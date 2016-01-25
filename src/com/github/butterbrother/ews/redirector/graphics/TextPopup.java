@@ -33,7 +33,7 @@ public class TextPopup
     public TextPopup(JTextComponent ownComponent) {
         editorPopup = new JPopupMenu();
 
-        if (! (ownComponent instanceof JPasswordField)) {
+        if (!(ownComponent instanceof JPasswordField)) {
             cutItem = new JMenuItem("Cut");
             cutItem.addActionListener(this);
             editorPopup.add(cutItem);

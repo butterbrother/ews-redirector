@@ -28,10 +28,11 @@ public class SendService extends SafeStopService {
 
     /**
      * Инициализация
-     * @param service           EWS
-     * @param deleteRedirected  удалять перенаправленные
-     * @param recipientEmail    e-mail получателя
-     * @param popup             трей для передачи аварийных сообщений
+     *
+     * @param service          EWS
+     * @param deleteRedirected удалять перенаправленные
+     * @param recipientEmail   e-mail получателя
+     * @param popup            трей для передачи аварийных сообщений
      */
     public SendService(ExchangeService service,
                        boolean deleteRedirected,
@@ -50,7 +51,8 @@ public class SendService extends SafeStopService {
 
     /**
      * Получение очереди сообщений на перенаправление.
-     * @return  очередь обработки
+     *
+     * @return очередь обработки
      */
     public ConcurrentSkipListSet<MessageElement> getQueue() {
         return this.messages;
@@ -67,12 +69,12 @@ public class SendService extends SafeStopService {
             } catch (InterruptedException e) {
                 super.safeStop();
             }
-            while (! messages.isEmpty()) {
-                if (! super.isActive()) break;
+            while (!messages.isEmpty()) {
+                if (!super.isActive()) break;
                 try {
                     // Обрабатываем только непрочитанные из входящих
                     EmailMessage emailMessage = EmailMessage.bind(service, messages.pollFirst().getItem());
-                    if ((! emailMessage.getParentFolderId().equals(deletedItems)) && (! emailMessage.getIsRead())) {
+                    if ((!emailMessage.getParentFolderId().equals(deletedItems)) && (!emailMessage.getIsRead())) {
                         try {
                             if (MailFilter.filtrate(filters, emailMessage)) {
                                 System.out.println("DEBUG: message \"" + emailMessage.getSubject() + "\" filtered");

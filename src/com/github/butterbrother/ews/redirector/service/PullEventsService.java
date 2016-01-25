@@ -28,9 +28,10 @@ public class PullEventsService extends SafeStopService {
 
     /**
      * Инициализация
-     * @param service   Exchange
-     * @param messages  очередь сообщений
-     * @param popup     трей для передачи аварийных сообщений
+     *
+     * @param service  Exchange
+     * @param messages очередь сообщений
+     * @param popup    трей для передачи аварийных сообщений
      */
     public PullEventsService(ExchangeService service,
                              ConcurrentSkipListSet<MessageElement> messages,
@@ -59,7 +60,7 @@ public class PullEventsService extends SafeStopService {
                     }
                     eventsResults = ps.getEvents();
                     for (ItemEvent event : eventsResults.getItemEvents()) {
-                        if (! super.isActive()) break;
+                        if (!super.isActive()) break;
                         System.out.println("DEBUG: notify reader module: Add one new message");
                         messages.add(new MessageElement(event.getItemId()));
                     }

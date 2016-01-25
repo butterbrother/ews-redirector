@@ -7,7 +7,7 @@ import microsoft.exchange.webservices.data.property.complex.ItemId;
  * ItemId - не comparable.
  * Соответственно данный класс обеспечивает сравнение.
  */
-public class MessageElement implements Comparable<MessageElement>{
+public class MessageElement implements Comparable<MessageElement> {
     private ItemId item;
     private String unique;
 

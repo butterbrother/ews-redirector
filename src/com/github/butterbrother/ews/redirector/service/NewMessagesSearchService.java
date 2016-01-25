@@ -29,7 +29,7 @@ public class NewMessagesSearchService extends SafeStopService {
     public NewMessagesSearchService(ExchangeService service,
                                     TrayControl.TrayPopup popup,
                                     ConcurrentSkipListSet<MessageElement> messages
-                                    ) {
+    ) {
         super();
         this.service = service;
         this.popup = popup;

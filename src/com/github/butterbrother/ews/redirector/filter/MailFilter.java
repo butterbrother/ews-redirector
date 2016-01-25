@@ -15,7 +15,7 @@ import java.util.List;
 public class MailFilter {
     public static final int OPERATOR_AND = 0;
     public static final int OPERATOR_OR = 1;
-    public static final String[] Operators = { "And", "Or" };
+    public static final String[] Operators = {"And", "Or"};
     // Имена параметров, хранящихся в файле настроек
     public static final String FILTER_NAME = "name";
     public static final String FILTER_OPERATOR = "operator";
@@ -29,15 +29,15 @@ public class MailFilter {
      * Инициализация данными из таблицы правил.
      * Правило с пустым значением исключается из набора
      *
-     * @param name          Имя фильтра
-     * @param rawRules         Правила из редактора фильтра:
-     *                      - тип из {@link FilterRule#RuleTypes}
-     *                      - оператор из {@link FilterRule#RuleOperators}
-     *                      - значение. Правило с пустым значением игнорируется
-     *                      и удаляется из фильтра
-     * @param operator      Логический оператор для правил из {@link #Operators}
+     * @param name     Имя фильтра
+     * @param rawRules Правила из редактора фильтра:
+     *                 - тип из {@link FilterRule#RuleTypes}
+     *                 - оператор из {@link FilterRule#RuleOperators}
+     *                 - значение. Правило с пустым значением игнорируется
+     *                 и удаляется из фильтра
+     * @param operator Логический оператор для правил из {@link #Operators}
      */
-    public MailFilter(String name, String[][]rawRules, int operator) {
+    public MailFilter(String name, String[][] rawRules, int operator) {
         this.name = name.trim().isEmpty() ? "New filter" : name.trim();
         List<FilterRule> result = new ArrayList<>();
 
@@ -71,9 +71,25 @@ public class MailFilter {
     }
 
     /**
+     * Фильтрация сообщения
+     *
+     * @param filters текущие фильтры
+     * @param message сообщение
+     * @return true - один или несколько фильтров сработали на сообщении
+     * @throws ServiceLocalException
+     */
+    public static boolean filtrate(MailFilter[] filters, EmailMessage message) throws ServiceLocalException {
+        for (MailFilter filter : filters)
+            if (filter.check(message))
+                return true;
+
+        return false;
+    }
+
+    /**
      * Возвращает имя фильтра
      *
-     * @return  Имя
+     * @return Имя
      */
     public String toString() {
         return name;
@@ -81,7 +97,8 @@ public class MailFilter {
 
     /**
      * Возвращает оператор применения правил
-     * @return  Логический оператор. Индекс согласно {@link #Operators}
+     *
+     * @return Логический оператор. Индекс согласно {@link #Operators}
      */
     public int getOperator() {
         return operator;
@@ -90,7 +107,7 @@ public class MailFilter {
     /**
      * Получение табличного представления для всех правил в фильтре
      *
-     * @return  Представление для таблицы размером Nx3
+     * @return Представление для таблицы размером Nx3
      */
     public String[][] getRawRules() {
         String[][] rawRules = new String[rules.length][3];
@@ -105,28 +122,13 @@ public class MailFilter {
     /**
      * Фильтрация сообщения
      *
-     * @param filters   текущие фильтры
-     * @param message   сообщение
-     * @return          true - один или несколько фильтров сработали на сообщении
-     * @throws ServiceLocalException
-     */
-    public static boolean filtrate(MailFilter[] filters, EmailMessage message) throws ServiceLocalException {
-        for (MailFilter filter : filters)
-            if (filter.check(message))
-                return true;
-
-        return false;
-    }
-
-    /**
-     * Фильтрация сообщения
-     * @param message   сообщение
-     * @return          true - одно или несколько правил сработали на сообщении
+     * @param message сообщение
+     * @return true - одно или несколько правил сработали на сообщении
      */
     protected boolean check(EmailMessage message) throws ServiceLocalException {
         if (operator == OPERATOR_AND) {
             for (FilterRule rule : rules) {
-                if (! checkRule(rule, message))
+                if (!checkRule(rule, message))
                     return false;
             }
 
@@ -144,9 +146,10 @@ public class MailFilter {
 
     /**
      * Проверка сообщения на срабатывание по правилу
-     * @param rule      правило
-     * @param message   сообщение
-     * @return          true - правило сработало для данного сообщения
+     *
+     * @param rule    правило
+     * @param message сообщение
+     * @return true - правило сработало для данного сообщения
      * @throws ServiceLocalException
      */
     private boolean checkRule(FilterRule rule, EmailMessage message) throws ServiceLocalException {
@@ -171,9 +174,10 @@ public class MailFilter {
     /**
      * Проверяет на соответствие правилу каждый адрес в списке.
      * Необходимо для обработки правил для списка e-mail: получатели, в копии и т.д.
-     * @param rule  Правило
-     * @param recipients    Список адресов
-     * @return  true - правило сработало на одном или нескольких адресатах
+     *
+     * @param rule       Правило
+     * @param recipients Список адресов
+     * @return true - правило сработало на одном или нескольких адресатах
      */
     private boolean checkAddressesRule(FilterRule rule, EmailAddressCollection recipients) {
         for (EmailAddress address : recipients.getItems()) {

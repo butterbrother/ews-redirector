@@ -101,28 +101,31 @@ public class ServiceController extends SafeStopService {
 
         if (pullEvents != null) {
             pullEvents.safeStop();
-            while (! pullEvents.isDone()) {
+            while (!pullEvents.isDone()) {
                 try {
                     Thread.sleep(10);
-                } catch (InterruptedException ignore) {}
+                } catch (InterruptedException ignore) {
+                }
             }
         }
 
         if (newMessages != null) {
             newMessages.safeStop();
-            while (! newMessages.isDone()) {
+            while (!newMessages.isDone()) {
                 try {
                     Thread.sleep(10);
-                } catch (InterruptedException ignore) {}
+                } catch (InterruptedException ignore) {
+                }
             }
         }
 
         if (send != null) {
             send.safeStop();
-            while (! send.isDone()) {
+            while (!send.isDone()) {
                 try {
                     Thread.sleep(10);
-                } catch (InterruptedException ignore) {}
+                } catch (InterruptedException ignore) {
+                }
             }
         }
 
