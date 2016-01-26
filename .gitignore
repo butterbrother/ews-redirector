@@ -27,3 +27,6 @@ lib/
 
 ## mpeltonen/sbt-idea plugin
 idea_modules/
+
+# maven build output
+target/
