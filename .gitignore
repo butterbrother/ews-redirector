@@ -30,3 +30,6 @@ idea_modules/
 
 # maven build output
 target/
+
+# win metadata cache
+*Thumbs.db

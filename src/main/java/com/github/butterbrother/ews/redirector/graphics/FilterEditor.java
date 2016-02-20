@@ -52,23 +52,34 @@ public class FilterEditor {
         frame.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
 
         AddRuleButton.addActionListener(new ActionListener() {
+
             @Override
             public void actionPerformed(ActionEvent e) {
+                stopRuleEditing();
+
                 RulesTableModel.addRow(new String[]{FilterRule.RuleTypes[0], FilterRule.RuleOperators[0], ""});
             }
         });
+
         RemoveRuleButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                stopRuleEditing();
+
                 if (RulesTable.getSelectedRow() >= 0) {
                     RulesTableModel.removeRow(RulesTable.getSelectedRow());
                 }
             }
         });
+
         DropRulesButton.addActionListener(new ActionListener() {
+
             @Override
             public void actionPerformed(ActionEvent e) {
                 int result = JOptionPane.showConfirmDialog(null, "This action drop all rules in filter. Continue?", "Warning", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+
+                stopRuleEditing();
+
                 if (result == JOptionPane.OK_OPTION) {
                     dropRulesTable();
                 }
@@ -81,8 +92,8 @@ public class FilterEditor {
         SaveFilterButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (RulesTable.isEditing())
-                    RulesTable.getCellEditor().stopCellEditing();
+                stopRuleEditing();
+
                 String rawRules[][] = new String[RulesTableModel.getRowCount()][RulesTableModel.getColumnCount()];
                 System.out.println("DEBUG: filter table data:");
                 for (int row = 0; row < RulesTableModel.getRowCount(); ++row) {
@@ -125,9 +136,26 @@ public class FilterEditor {
         new TextPopup(FilterNameInput);
     }
 
+    /**
+     * Отмена редактирования.
+     * По нажатию на кнопку отмены.
+     */
     private void cancelEditing() {
+        stopRuleEditing();
+
         frame.setVisible(false);
         owner.doneFilterEditing(null);
+    }
+
+    /**
+     * Прекращает редактирование правила.
+     * Для редактирования используется редактор TextField,
+     * поэтому до окончания редактирования в ячейке таблицы не
+     * отобразится изменений.
+     */
+    private void stopRuleEditing() {
+        if (RulesTable.isEditing())
+            RulesTable.getCellEditor().stopCellEditing();
     }
 
 

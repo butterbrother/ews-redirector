@@ -4,7 +4,7 @@
     <groupId>com.github.butterbrother.ews.redirector</groupId>
     <artifactId>ews-redirector</artifactId>
     <packaging>jar</packaging>
-    <version>0.2-beta</version>
+    <version>0.2.1</version>
     <name>ews-redirector</name>
     <url>http://maven.apache.org</url>
 
