@@ -7,7 +7,9 @@ import microsoft.exchange.webservices.data.core.enumeration.property.WellKnownFo
 import microsoft.exchange.webservices.data.core.service.item.EmailMessage;
 import microsoft.exchange.webservices.data.property.complex.EmailAddress;
 import microsoft.exchange.webservices.data.property.complex.FolderId;
+import microsoft.exchange.webservices.data.property.complex.ItemId;
 
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
@@ -18,30 +20,31 @@ import java.util.concurrent.ConcurrentSkipListSet;
  * Для этого периодически считывает очередь, содержащую
  * id данных сообщений. Очередь создаётся этим классом.
  */
-public class SendService extends SafeStopService {
+class SendService extends SafeStopService {
     private ConcurrentSkipListSet<MessageElement> messages = new ConcurrentSkipListSet<>();
+    private ArrayList<ItemId> sendedMessages = new ArrayList<>();   // Прочитанные/пересланные сообщения
     private boolean deleteRedirected;
     private EmailAddress recipientEmail;
     private TrayControl.TrayPopup popup;
-    private ExchangeService service;
+    private ExchangeConnector exchangeConnector;
     private MailFilter[] filters;
 
     /**
      * Инициализация
      *
-     * @param service          EWS
+     * @param connector          EWS
      * @param deleteRedirected удалять перенаправленные
      * @param recipientEmail   e-mail получателя
      * @param popup            трей для передачи аварийных сообщений
      */
-    public SendService(ExchangeService service,
+    SendService(ExchangeConnector connector,
                        boolean deleteRedirected,
                        String recipientEmail,
                        TrayControl.TrayPopup popup,
                        MailFilter[] filters) {
         super();
         this.filters = filters;
-        this.service = service;
+        this.exchangeConnector = connector;
         this.deleteRedirected = deleteRedirected;
         this.recipientEmail = new EmailAddress(recipientEmail);
         this.popup = popup;
@@ -54,7 +57,7 @@ public class SendService extends SafeStopService {
      *
      * @return очередь обработки
      */
-    public ConcurrentSkipListSet<MessageElement> getQueue() {
+    ConcurrentSkipListSet<MessageElement> getQueue() {
         return this.messages;
     }
 
@@ -63,39 +66,81 @@ public class SendService extends SafeStopService {
      */
     public void run() {
         FolderId deletedItems = new FolderId(WellKnownFolderName.DeletedItems);
-        while (super.isActive()) {
-            try {
-                Thread.sleep(200);
-            } catch (InterruptedException e) {
-                super.safeStop();
-            }
-            while (!messages.isEmpty()) {
-                if (!super.isActive()) break;
-                try {
-                    // Обрабатываем только непрочитанные из входящих
-                    EmailMessage emailMessage = EmailMessage.bind(service, messages.pollFirst().getItem());
-                    if ((!emailMessage.getParentFolderId().equals(deletedItems)) && (!emailMessage.getIsRead())) {
-                        try {
-                            if (MailFilter.filtrate(filters, emailMessage)) {
-                                System.out.println("DEBUG: message \"" + emailMessage.getSubject() + "\" filtered");
-                            } else
-                                emailMessage.forward(null, recipientEmail);
 
-                            if (deleteRedirected)
-                                emailMessage.move(deletedItems);
+        int sendedFlushCount = 5;
+
+        process:
+        {
+            while (super.isActive()) {
+                try (ExchangeService service = exchangeConnector.createService()) {
+
+                    while (super.isActive()) {
+
+                        // Пауза перед повторной отправкой
+                        try {
+                            Thread.sleep(200);
+
+                            // Очищаем треть списка уже переданных каждую секунду
+                            if (sendedMessages.size() > 0)
+                                --sendedFlushCount;
                             else
-                                emailMessage.setIsRead(true);
-                        } catch (Exception forwardError) {
-                            if (forwardError.getMessage().contains("The specified object was not found in the store.")) {
-                                // Ошибка появляется, если объект уже отправлен
-                                System.out.println("DEBUG: " + forwardError.getMessage() + ": " + forwardError.getCause().getMessage());
-                            } else
-                                popup.error("Email forwarding error", forwardError.getMessage());
+                                sendedFlushCount = 5;
+
+                            if (sendedFlushCount <= 0) {
+                                sendedFlushCount = 5;
+
+                                int thirdSize = (int)(sendedMessages.size() / 3.0);
+                                if (thirdSize <= sendedMessages.size())
+                                    for (int i = 0; i < thirdSize; ++i)
+                                        sendedMessages.remove(0);
+
+                                sendedMessages.trimToSize();
+                            }
+                        } catch (InterruptedException e) {
+                            super.safeStop();
+                            break process;
+                        }
+
+                        // Отсылаем все уведомления из очереди
+                        while (!messages.isEmpty()) {
+                            if (!super.isActive()) break process;
+
+                            ItemId messageId = messages.pollFirst().getItem();
+
+                            // Пропускаем уже переданные сообщения. Сообщения с одинаковыми Id могут поступать одновременно
+                            // с двух разных источников - PullEventService и NewMessageSearchService
+                            if (sendedMessages.contains(messageId))
+                                continue;
+
+                            sendedMessages.add(messageId);   // Добавляем во временный список прочитанных
+
+                            EmailMessage emailMessage = EmailMessage.bind(service, messageId);
+
+                            // Обрабатываем только непрочитанные из входящих
+                            if ((!emailMessage.getParentFolderId().equals(deletedItems)) && (!emailMessage.getIsRead())) {
+                                    if (MailFilter.filtrate(filters, emailMessage)) {
+                                        System.out.println("DEBUG: message \"" + emailMessage.getSubject() + "\" filtered");
+                                    } else
+                                        emailMessage.forward(null, recipientEmail);
+
+                                    if (deleteRedirected)
+                                        emailMessage.move(deletedItems);
+                                    else
+                                        emailMessage.setIsRead(true);
+                            }
                         }
                     }
                 } catch (Exception e) {
                     popup.error("Exchange error (Forward module)", e.getMessage());
                 }
+
+                // Пауза между переподключениями, при получении ошибки
+                if (super.isActive())
+                    try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException e) {
+                        super.safeStop();
+                    }
             }
         }
 

@@ -21,17 +21,18 @@ import java.util.concurrent.ConcurrentSkipListSet;
  * сообщение во входящих и не прочитанное.
  * Запускается периодически.
  */
-public class NewMessagesSearchService extends SafeStopService {
-    private ExchangeService service;
+class NewMessagesSearchService extends SafeStopService {
+
+    private ExchangeConnector exchangeConnector;
     private TrayControl.TrayPopup popup;
     private ConcurrentSkipListSet<MessageElement> messages;
 
-    public NewMessagesSearchService(ExchangeService service,
+    NewMessagesSearchService(ExchangeConnector exchangeConnector,
                                     TrayControl.TrayPopup popup,
                                     ConcurrentSkipListSet<MessageElement> messages
     ) {
         super();
-        this.service = service;
+        this.exchangeConnector = exchangeConnector;
         this.popup = popup;
         this.messages = messages;
 
@@ -41,6 +42,7 @@ public class NewMessagesSearchService extends SafeStopService {
     @Override
     public void run() {
         try {
+            // Генерируем представление (фильтр)
             SearchFilter newMessages = new SearchFilter.SearchFilterCollection(
                     LogicalOperator.And,
                     new SearchFilter.IsEqualTo(EmailMessageSchema.IsRead, false)
@@ -49,25 +51,29 @@ public class NewMessagesSearchService extends SafeStopService {
             view.getOrderBy().clear();
             view.getOrderBy().add(ItemSchema.DateTimeReceived, SortDirection.Descending);
 
-            while (super.isActive()) {
-                try {
-                    FindItemsResults<Item> results = service.findItems(WellKnownFolderName.Inbox, newMessages, view);
-                    for (Item item : results.getItems()) {
-                        if (!super.isActive()) break;
-                        if (item.getSchema().equals(EmailMessageSchema.Instance)) {
-                            messages.add(new MessageElement(item.getId()));
-                            System.out.println("DEBUG: new mail watch: Add one new message");
+                while (super.isActive()) {
+
+                    // Подключаемся, пробегаем по списку сообщений, отключаемся
+                    try (ExchangeService service = exchangeConnector.createService()){
+
+                        FindItemsResults<Item> results = service.findItems(WellKnownFolderName.Inbox, newMessages, view);
+                        for (Item item : results.getItems()) {
+                            if (!super.isActive()) break;
+                            if (item.getSchema().equals(EmailMessageSchema.Instance)) {
+                                messages.add(new MessageElement(item.getId()));
+                                System.out.println("DEBUG: new mail watch: Add one new message");
+                            }
                         }
+                    } catch (Exception msgWorkExc) {
+                        popup.error("Exchange error (New mail watch module)", msgWorkExc.getMessage());
                     }
-                } catch (Exception msgWorkExc) {
-                    popup.error("Exchange error (New mail watch module)", msgWorkExc.getMessage());
+                    try {
+                        Thread.sleep(10000);
+                    } catch (InterruptedException ie) {
+                        super.safeStop();
+                        break;
+                    }
                 }
-                try {
-                    Thread.sleep(10000);
-                } catch (InterruptedException ie) {
-                    super.safeStop();
-                }
-            }
         } catch (ServiceLocalException se) {
             popup.error("Exchange error (New mail watch module)", se.getMessage());
         }

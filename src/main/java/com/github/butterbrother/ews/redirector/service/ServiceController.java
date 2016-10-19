@@ -62,9 +62,9 @@ public class ServiceController extends SafeStopService {
     public void run() {
         if (connector != null) {
             try {
-                send = new SendService(connector.createService(), deleteRedirected, recipient, popup, filters);
-                pullEvents = new PullEventsService(connector.createService(), send.getQueue(), popup);
-                newMessages = new NewMessagesSearchService(connector.createService(), popup, send.getQueue());
+                send = new SendService(connector, deleteRedirected, recipient, popup, filters);
+                pullEvents = new PullEventsService(connector, send.getQueue(), popup);
+                newMessages = new NewMessagesSearchService(connector, popup, send.getQueue());
 
                 startStopButton.setText("Stop");
                 while (super.isActive()) {

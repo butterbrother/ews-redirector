@@ -7,11 +7,11 @@ import microsoft.exchange.webservices.data.property.complex.ItemId;
  * ItemId - не comparable.
  * Соответственно данный класс обеспечивает сравнение.
  */
-public class MessageElement implements Comparable<MessageElement> {
+class MessageElement implements Comparable<MessageElement> {
     private ItemId item;
     private String unique;
 
-    public MessageElement(
+    MessageElement(
             ItemId item
     ) throws Exception {
         this.item = item;
@@ -23,11 +23,11 @@ public class MessageElement implements Comparable<MessageElement> {
         return unique.compareTo(o.getUniqueId());
     }
 
-    public String getUniqueId() {
+    private String getUniqueId() {
         return unique;
     }
 
-    public ItemId getItem() {
+    ItemId getItem() {
         return item;
     }
 }

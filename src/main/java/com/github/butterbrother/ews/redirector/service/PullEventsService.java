@@ -21,23 +21,23 @@ import java.util.concurrent.ConcurrentSkipListSet;
  * прибытии которых появились уже после запуска сервиса.
  * Предпочтительно, что бы запускался первым
  */
-public class PullEventsService extends SafeStopService {
-    private ExchangeService service;
+class PullEventsService extends SafeStopService {
+    private ExchangeConnector exchangeConnector;
     private TrayControl.TrayPopup popup;
     private ConcurrentSkipListSet<MessageElement> messages;
 
     /**
      * Инициализация
      *
-     * @param service  Exchange
+     * @param connector  Exchange
      * @param messages очередь сообщений
      * @param popup    трей для передачи аварийных сообщений
      */
-    public PullEventsService(ExchangeService service,
+    PullEventsService(ExchangeConnector connector,
                              ConcurrentSkipListSet<MessageElement> messages,
                              TrayControl.TrayPopup popup) {
         super();
-        this.service = service;
+        this.exchangeConnector = connector;
         this.messages = messages;
         this.popup = popup;
 
@@ -49,28 +49,52 @@ public class PullEventsService extends SafeStopService {
         folders.add(new FolderId(WellKnownFolderName.Inbox));
         GetEventsResults eventsResults;
 
-        while (super.isActive()) {
-            try {
-                PullSubscription ps = service.subscribeToPullNotifications(folders, 5, null, EventType.NewMail);
-                while (super.isActive()) {
-                    try {
-                        Thread.sleep(200);
-                    } catch (InterruptedException ie) {
-                        super.safeStop();
+        boolean successConnection;
+        processing :
+        {
+
+            while (super.isActive()) {
+
+                successConnection = false;
+
+                try (ExchangeService service = exchangeConnector.createService()){
+                    successConnection = true;
+
+                    PullSubscription ps = service.subscribeToPullNotifications(folders, 5, null, EventType.NewMail);
+
+                    while (super.isActive()) {
+                        try {
+                            Thread.sleep(200);
+                        } catch (InterruptedException ie) {
+                            super.safeStop();
+                            break processing;
+                        }
+
+                        eventsResults = ps.getEvents();
+
+                        for (ItemEvent event : eventsResults.getItemEvents()) {
+                            if (!super.isActive()) break;
+                            System.out.println("DEBUG: notify reader module: Add one new message");
+                            messages.add(new MessageElement(event.getItemId()));
+                        }
+
                     }
-                    eventsResults = ps.getEvents();
-                    for (ItemEvent event : eventsResults.getItemEvents()) {
-                        if (!super.isActive()) break;
-                        System.out.println("DEBUG: notify reader module: Add one new message");
-                        messages.add(new MessageElement(event.getItemId()));
+                } catch (Exception e) {
+
+                    /*
+                     * Отображаем ошибку только при неудачном подключении, а не спустя таймаута push-уведомлений.
+                     * Если ошибка авторизации - это увидим при повторной попытке, когда service будет null.
+                     */
+                    if (!successConnection) {
+                        popup.error("Exchange error (Notify reader module)", e.getMessage());
+
+                        try {
+                            Thread.sleep(5000);
+                        } catch (InterruptedException ie) {
+                            super.safeStop();
+                            break processing;
+                        }
                     }
-                }
-            } catch (Exception e) {
-                popup.error("Exchange error (Notify reader module)", e.getMessage());
-                try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException ie) {
-                    super.safeStop();
                 }
             }
         }
