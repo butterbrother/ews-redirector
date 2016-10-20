@@ -32,16 +32,16 @@ class SendService extends SafeStopService {
     /**
      * Инициализация
      *
-     * @param connector          EWS
+     * @param connector        EWS
      * @param deleteRedirected удалять перенаправленные
      * @param recipientEmail   e-mail получателя
      * @param popup            трей для передачи аварийных сообщений
      */
     SendService(ExchangeConnector connector,
-                       boolean deleteRedirected,
-                       String recipientEmail,
-                       TrayControl.TrayPopup popup,
-                       MailFilter[] filters) {
+                boolean deleteRedirected,
+                String recipientEmail,
+                TrayControl.TrayPopup popup,
+                MailFilter[] filters) {
         super();
         this.filters = filters;
         this.exchangeConnector = connector;
@@ -89,7 +89,7 @@ class SendService extends SafeStopService {
                             if (sendedFlushCount <= 0) {
                                 sendedFlushCount = 5;
 
-                                int thirdSize = (int)(sendedMessages.size() / 3.0);
+                                int thirdSize = (int) (sendedMessages.size() / 3.0);
                                 if (thirdSize <= sendedMessages.size())
                                     for (int i = 0; i < thirdSize; ++i)
                                         sendedMessages.remove(0);
@@ -118,15 +118,15 @@ class SendService extends SafeStopService {
 
                             // Обрабатываем только непрочитанные из входящих
                             if ((!emailMessage.getParentFolderId().equals(deletedItems)) && (!emailMessage.getIsRead())) {
-                                    if (MailFilter.filtrate(filters, emailMessage)) {
-                                        System.out.println("DEBUG: message \"" + emailMessage.getSubject() + "\" filtered");
-                                    } else
-                                        emailMessage.forward(null, recipientEmail);
+                                if (MailFilter.filtrate(filters, emailMessage)) {
+                                    System.out.println("DEBUG: message \"" + emailMessage.getSubject() + "\" filtered");
+                                } else
+                                    emailMessage.forward(null, recipientEmail);
 
-                                    if (deleteRedirected)
-                                        emailMessage.move(deletedItems);
-                                    else
-                                        emailMessage.setIsRead(true);
+                                if (deleteRedirected)
+                                    emailMessage.move(deletedItems);
+                                else
+                                    emailMessage.setIsRead(true);
                             }
                         }
                     }

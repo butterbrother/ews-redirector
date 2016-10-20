@@ -29,13 +29,13 @@ class PullEventsService extends SafeStopService {
     /**
      * Инициализация
      *
-     * @param connector  Exchange
-     * @param messages очередь сообщений
-     * @param popup    трей для передачи аварийных сообщений
+     * @param connector Exchange
+     * @param messages  очередь сообщений
+     * @param popup     трей для передачи аварийных сообщений
      */
     PullEventsService(ExchangeConnector connector,
-                             ConcurrentSkipListSet<MessageElement> messages,
-                             TrayControl.TrayPopup popup) {
+                      ConcurrentSkipListSet<MessageElement> messages,
+                      TrayControl.TrayPopup popup) {
         super();
         this.exchangeConnector = connector;
         this.messages = messages;
@@ -50,14 +50,14 @@ class PullEventsService extends SafeStopService {
         GetEventsResults eventsResults;
 
         boolean successConnection;
-        processing :
+        processing:
         {
 
             while (super.isActive()) {
 
                 successConnection = false;
 
-                try (ExchangeService service = exchangeConnector.createService()){
+                try (ExchangeService service = exchangeConnector.createService()) {
                     successConnection = true;
 
                     PullSubscription ps = service.subscribeToPullNotifications(folders, 5, null, EventType.NewMail);

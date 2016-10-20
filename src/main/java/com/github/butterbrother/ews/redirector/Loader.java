@@ -49,7 +49,7 @@ public class Loader {
             trayControl.setCloseListener(new MouseAdapter() {
                 @Override
                 public void mouseReleased(MouseEvent e) {
-                    win.stopServiceControl();
+                    //win.stopServiceControl();
                     win.saveWindowPos();
                     System.exit(0);
                 }

@@ -13,7 +13,7 @@ import java.net.URI;
  * Осуществляет проверку возможности подключения к EWS.
  * Генерирует объекты ExchangeService с авторизацией для сервисов.
  */
-public class ExchangeConnector {
+class ExchangeConnector {
     private ExchangeCredentials credentials;
     private String email;
     private URI url;
@@ -30,7 +30,7 @@ public class ExchangeConnector {
      * @param enableAutodiscover Необходимость автоматического определения EWS URL
      * @throws Exception
      */
-    protected ExchangeConnector(
+    ExchangeConnector(
             String domain,
             String login,
             String password,
@@ -73,7 +73,7 @@ public class ExchangeConnector {
      * @return подключение к EWS
      * @throws Exception
      */
-    public ExchangeService createService() throws Exception {
+    ExchangeService createService() throws Exception {
         ExchangeService service = new ExchangeService(ExchangeVersion.Exchange2010_SP2);
         service.setCredentials(credentials);
         if (enableAutodiscover)
@@ -81,8 +81,10 @@ public class ExchangeConnector {
         else
             service.setUrl(url);
 
+        /*
         System.out.println("DEBUG: connection test, get inbox mail count");
         System.out.println(Folder.bind(service, WellKnownFolderName.Inbox).getTotalCount());
+        */
 
         return service;
     }
@@ -92,7 +94,7 @@ public class ExchangeConnector {
      *
      * @return EWS URL
      */
-    public String getCurrentUrl() {
+    String getCurrentUrl() {
         return url.toString();
     }
 }

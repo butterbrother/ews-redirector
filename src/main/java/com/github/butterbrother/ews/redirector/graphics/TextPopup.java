@@ -12,7 +12,7 @@ import java.awt.event.MouseEvent;
  * Автоматически добавляет Listener для текстового объекта.
  * Содержит элементы работы с текстом: вырезать/копировать/вставить
  */
-public class TextPopup
+class TextPopup
         extends MouseAdapter
         implements ActionListener {
 
@@ -30,7 +30,7 @@ public class TextPopup
      *
      * @param ownComponent Текстовое поле
      */
-    public TextPopup(JTextComponent ownComponent) {
+    TextPopup(JTextComponent ownComponent) {
         editorPopup = new JPopupMenu();
 
         if (!(ownComponent instanceof JPasswordField)) {

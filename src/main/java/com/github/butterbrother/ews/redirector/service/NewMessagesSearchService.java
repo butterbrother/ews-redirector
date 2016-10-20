@@ -28,8 +28,8 @@ class NewMessagesSearchService extends SafeStopService {
     private ConcurrentSkipListSet<MessageElement> messages;
 
     NewMessagesSearchService(ExchangeConnector exchangeConnector,
-                                    TrayControl.TrayPopup popup,
-                                    ConcurrentSkipListSet<MessageElement> messages
+                             TrayControl.TrayPopup popup,
+                             ConcurrentSkipListSet<MessageElement> messages
     ) {
         super();
         this.exchangeConnector = exchangeConnector;
@@ -51,29 +51,29 @@ class NewMessagesSearchService extends SafeStopService {
             view.getOrderBy().clear();
             view.getOrderBy().add(ItemSchema.DateTimeReceived, SortDirection.Descending);
 
-                while (super.isActive()) {
+            while (super.isActive()) {
 
-                    // Подключаемся, пробегаем по списку сообщений, отключаемся
-                    try (ExchangeService service = exchangeConnector.createService()){
+                // Подключаемся, пробегаем по списку сообщений, отключаемся
+                try (ExchangeService service = exchangeConnector.createService()) {
 
-                        FindItemsResults<Item> results = service.findItems(WellKnownFolderName.Inbox, newMessages, view);
-                        for (Item item : results.getItems()) {
-                            if (!super.isActive()) break;
-                            if (item.getSchema().equals(EmailMessageSchema.Instance)) {
-                                messages.add(new MessageElement(item.getId()));
-                                System.out.println("DEBUG: new mail watch: Add one new message");
-                            }
+                    FindItemsResults<Item> results = service.findItems(WellKnownFolderName.Inbox, newMessages, view);
+                    for (Item item : results.getItems()) {
+                        if (!super.isActive()) break;
+                        if (item.getSchema().equals(EmailMessageSchema.Instance)) {
+                            messages.add(new MessageElement(item.getId()));
+                            System.out.println("DEBUG: new mail watch: Add one new message");
                         }
-                    } catch (Exception msgWorkExc) {
-                        popup.error("Exchange error (New mail watch module)", msgWorkExc.getMessage());
                     }
-                    try {
-                        Thread.sleep(10000);
-                    } catch (InterruptedException ie) {
-                        super.safeStop();
-                        break;
-                    }
+                } catch (Exception msgWorkExc) {
+                    popup.error("Exchange error (New mail watch module)", msgWorkExc.getMessage());
                 }
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException ie) {
+                    super.safeStop();
+                    break;
+                }
+            }
         } catch (ServiceLocalException se) {
             popup.error("Exchange error (New mail watch module)", se.getMessage());
         }

@@ -134,4 +134,12 @@ public class TrayControl {
             showPopup(caption, text, TrayIcon.MessageType.ERROR);
         }
     }
+
+    private class OnPopupMouseListener
+            implements Runnable {
+
+        public void run() {
+
+        }
+    }
 }

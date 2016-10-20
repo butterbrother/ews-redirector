@@ -17,23 +17,23 @@ import java.util.LinkedList;
  * Пока что здесь только параметры подключения.
  */
 public class SettingsWindow {
-    public static final String KEY_WINDOW_HEIGHT = "Settings window height";
-    public static final String KEY_WINDOW_WIDTH = "Settings window width";
-    public static final String KEY_WINDOW_X = "Settings window X position";
-    public static final String KEY_WINDOW_Y = "Settings window Y position";
-    public static final String DOMAIN = "Domain name";
-    public static final String EMAIL = "e-mail";
-    public static final String LOGIN = "User login";
-    public static final String PASSWORD = "User password";
-    public static final String AUTO_DISCOVER_URL = "Auto discover EWS service URL";
-    public static final String AUTO_DISCOVER_ENABLED = "Enable auto discover URL";
-    public static final String DELETE_REDIRECTED = "Enable delete redirected mail";
-    public static final String RECIPIENT_EMAIL = "Recipient e-mail";
-    public static final String FILTERS = "Email filters";
-    public static final String FILTER_EDITOR_HEIGHT = "Filter editor window height";
-    public static final String FILTER_EDITOR_WIDTH = "Filter editor window width";
-    public static final String FILTER_EDITOR_X = "Filter editor window X position";
-    public static final String FILTER_EDITOR_Y = "Filter editor window Y position";
+    private static final String KEY_WINDOW_HEIGHT = "Settings window height";
+    private static final String KEY_WINDOW_WIDTH = "Settings window width";
+    private static final String KEY_WINDOW_X = "Settings window X position";
+    private static final String KEY_WINDOW_Y = "Settings window Y position";
+    private static final String DOMAIN = "Domain name";
+    private static final String EMAIL = "e-mail";
+    private static final String LOGIN = "User login";
+    private static final String PASSWORD = "User password";
+    private static final String AUTO_DISCOVER_URL = "Auto discover EWS service URL";
+    private static final String AUTO_DISCOVER_ENABLED = "Enable auto discover URL";
+    private static final String DELETE_REDIRECTED = "Enable delete redirected mail";
+    private static final String RECIPIENT_EMAIL = "Recipient e-mail";
+    private static final String FILTERS = "Email filters";
+    private static final String FILTER_EDITOR_HEIGHT = "Filter editor window height";
+    private static final String FILTER_EDITOR_WIDTH = "Filter editor window width";
+    private static final String FILTER_EDITOR_X = "Filter editor window X position";
+    private static final String FILTER_EDITOR_Y = "Filter editor window Y position";
 
     private JPanel switchPanel;
     private JTextField LoginInput;
@@ -210,7 +210,7 @@ public class SettingsWindow {
      * @param filter Обновлённый фильтр. Если null, то считается,
      *               что изменения были отклонены.
      */
-    protected void doneFilterEditing(MailFilter filter) {
+    void doneFilterEditing(MailFilter filter) {
         if (filter != null)
             if (edited >= 0) {
                 filters.remove(edited);
@@ -310,7 +310,7 @@ public class SettingsWindow {
     /**
      * Сохранение настроек соединения
      */
-    public void saveConnectionSettings() {
+    private void saveConnectionSettings() {
         settings.setString(DOMAIN, DomainInput.getText());
         settings.setString(EMAIL, EMailInput.getText());
         settings.setString(LOGIN, LoginInput.getText());

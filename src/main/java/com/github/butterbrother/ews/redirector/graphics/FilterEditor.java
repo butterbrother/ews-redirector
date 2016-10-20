@@ -41,7 +41,7 @@ public class FilterEditor {
     /**
      * Создание окна редактирования фильтров
      */
-    protected FilterEditor(final SettingsWindow owner, int posX, int posY, int winH, int winW) {
+    FilterEditor(final SettingsWindow owner, int posX, int posY, int winH, int winW) {
         $$$setupUI$$$();
 
         frame = new JFrame("Filter editor");
@@ -173,7 +173,7 @@ public class FilterEditor {
      *
      * @return размер окна
      */
-    public Dimension getSize() {
+    Dimension getSize() {
         return frame.getSize();
     }
 
@@ -182,7 +182,7 @@ public class FilterEditor {
      *
      * @return позиция окна
      */
-    public Point getLocation() {
+    Point getLocation() {
         return frame.getLocation();
     }
 
@@ -191,7 +191,7 @@ public class FilterEditor {
      *
      * @param filter почтовый фильтр
      */
-    public void editFilter(MailFilter filter) {
+    void editFilter(MailFilter filter) {
         FilterNameInput.setText(filter.toString());
 
         dropRulesTable();
