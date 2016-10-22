@@ -2,9 +2,7 @@ package com.github.butterbrother.ews.redirector.graphics;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.net.URL;
 
 /**
@@ -16,6 +14,7 @@ public class TrayControl {
     private TrayIcon icon;
     private JMenuItem exitItem = new JMenuItem("Exit");
     private JMenuItem configItem = new JMenuItem("Settings...");
+    private JFrame hiddenDialog = null;
 
     public TrayControl() throws AWTException {
         if (!SystemTray.isSupported()) {
@@ -36,6 +35,7 @@ public class TrayControl {
     public void setConfigListener(MouseListener listener) {
         configItem.addMouseListener(listener);
     }
+
 
     /**
      * Добавляет слушателя для иконки.
@@ -83,24 +83,51 @@ public class TrayControl {
      */
     private void createTrayPopupMenu() {
         final JPopupMenu menu = new JPopupMenu();
+        //PopupMenu menu = new PopupMenu();
         JMenuItem header = new JMenuItem("EWS redirector");
+        //MenuItem header = new MenuItem();
         header.setEnabled(false);
         menu.add(header);
         menu.addSeparator();
         menu.add(configItem);
+
+        hiddenDialog = new JFrame();
+        hiddenDialog.setType(Frame.Type.UTILITY);
+        hiddenDialog.setSize(5, 5);
 
         menu.add(exitItem);
         // Костыль. Трей не умеет JPopupMenu
         icon.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent e) {
-                if ((e.getButton() & MouseEvent.BUTTON2) == MouseEvent.BUTTON2) {
+                if ((e.getButton() & MouseEvent.BUTTON2) == MouseEvent.BUTTON2 && e.isPopupTrigger()) {
                     menu.setLocation(e.getX(), e.getY());
-                    menu.setInvoker(menu);
+                    hiddenDialog.setLocation(e.getX(), e.getY());
+                    menu.setInvoker(hiddenDialog);
+                    //menu.setInvoker(menu);
+
+                    //if (!hiddenDialog.isUndecorated()) hiddenDialog.setUndecorated(true);
+                    hiddenDialog.setVisible(true);
                     menu.setVisible(true);
                 }
             }
         });
+
+        // Ещё один костыль, на этот раз для того, что бы прятать меню при снятии фокуса
+        hiddenDialog.addFocusListener(new FocusAdapter() {
+                                          @Override
+                                          public void focusLost(FocusEvent e) {
+                                              hiddenDialog.setVisible(false);
+                                          }
+          });
+
+        menu.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentHidden(ComponentEvent e) {
+                hiddenDialog.setVisible(false);
+            }
+        });
+
     }
 
     /**
@@ -132,14 +159,6 @@ public class TrayControl {
          */
         public void error(String caption, String text) {
             showPopup(caption, text, TrayIcon.MessageType.ERROR);
-        }
-    }
-
-    private class OnPopupMouseListener
-            implements Runnable {
-
-        public void run() {
-
         }
     }
 }
