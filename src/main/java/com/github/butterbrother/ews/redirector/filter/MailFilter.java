@@ -17,7 +17,7 @@ public class MailFilter {
     public static final int OPERATOR_OR = 1;
     public static final String[] Operators = {"And", "Or"};
     // Имена параметров, хранящихся в файле настроек
-    public static final String FILTER_NAME = "name";
+    // public static final String FILTER_NAME = "name";
     public static final String FILTER_OPERATOR = "operator";
     public static final String FILTER_RULES = "rules";
 
@@ -76,7 +76,7 @@ public class MailFilter {
      * @param filters текущие фильтры
      * @param message сообщение
      * @return true - один или несколько фильтров сработали на сообщении
-     * @throws ServiceLocalException
+     * @throws ServiceLocalException    ошибка обработки сообщений
      */
     public static boolean filtrate(MailFilter[] filters, EmailMessage message) throws ServiceLocalException {
         for (MailFilter filter : filters)
@@ -91,6 +91,7 @@ public class MailFilter {
      *
      * @return Имя
      */
+    @Override
     public String toString() {
         return name;
     }
@@ -125,7 +126,7 @@ public class MailFilter {
      * @param message сообщение
      * @return true - одно или несколько правил сработали на сообщении
      */
-    protected boolean check(EmailMessage message) throws ServiceLocalException {
+    private boolean check(EmailMessage message) throws ServiceLocalException {
         if (operator == OPERATOR_AND) {
             for (FilterRule rule : rules) {
                 if (!checkRule(rule, message))
@@ -150,7 +151,7 @@ public class MailFilter {
      * @param rule    правило
      * @param message сообщение
      * @return true - правило сработало для данного сообщения
-     * @throws ServiceLocalException
+     * @throws ServiceLocalException    ошибка проверки сообщения
      */
     private boolean checkRule(FilterRule rule, EmailMessage message) throws ServiceLocalException {
         switch (rule.getType()) {

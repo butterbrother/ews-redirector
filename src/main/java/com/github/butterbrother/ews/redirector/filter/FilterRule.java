@@ -5,17 +5,17 @@ package com.github.butterbrother.ews.redirector.filter;
  * Из таких правил формируется одиночный фильтр.
  */
 public class FilterRule {
-    public static final int TYPE_FROM = 0;
-    public static final int TYPE_TO = 1;
-    public static final int TYPE_CC = 2;
-    public static final int TYPE_BCC = 3;
-    public static final int TYPE_SUBJECT = 4;
-    public static final int TYPE_MESSAGE = 5;
+    static final int TYPE_FROM = 0;
+    static final int TYPE_TO = 1;
+    static final int TYPE_CC = 2;
+    static final int TYPE_BCC = 3;
+    static final int TYPE_SUBJECT = 4;
+    static final int TYPE_MESSAGE = 5;
 
-    public static final int OPERATOR_EQUALS = 0;
-    public static final int OPERATOR_NOT_EQUALS = 1;
-    public static final int OPERATOR_CONTAINS = 2;
-    public static final int OPERATOR_NOT_CONTAINS = 3;
+    private static final int OPERATOR_EQUALS = 0;
+    private static final int OPERATOR_NOT_EQUALS = 1;
+    private static final int OPERATOR_CONTAINS = 2;
+    private static final int OPERATOR_NOT_CONTAINS = 3;
 
     // Порядок должен соответствовать числовым константам, т.к. используется для списка
     public static final String[] RuleTypes = {
@@ -48,7 +48,7 @@ public class FilterRule {
      *
      * @param rawRule Строковое правило из таблицы
      */
-    public FilterRule(String[] rawRule) {
+    FilterRule(String[] rawRule) {
         System.out.print("DEBUG: creating rule. Data in array: ");
         for (String item : rawRule) System.out.print("[" + item + "]");
         System.out.println();
@@ -81,7 +81,7 @@ public class FilterRule {
      * @param data Данные
      * @return Соответствие правилу фильтра
      */
-    public boolean check(String data) {
+    boolean check(String data) {
         switch (ruleOperator) {
             case OPERATOR_EQUALS:
                 return data.equalsIgnoreCase(ruleValue);
@@ -101,7 +101,7 @@ public class FilterRule {
      *
      * @return строка для таблицы из трёх столбцов
      */
-    public String[] getRuleView() {
+    String[] getRuleView() {
         return new String[]{RuleTypes[ruleType], RuleOperators[ruleOperator], ruleValue};
     }
 
@@ -110,7 +110,7 @@ public class FilterRule {
      *
      * @return возвращает тип правила
      */
-    public int getType() {
+    int getType() {
         return ruleType;
     }
 }

@@ -33,12 +33,6 @@ public class Loader {
             Settings config = new Settings(trayControl.getTrayPopup());
             final SettingsWindow win = new SettingsWindow(config, trayControl.getTrayPopup());
 
-            trayControl.setConfigListener(new MouseAdapter() {
-                @Override
-                public void mouseReleased(MouseEvent e) {
-                    win.showSettingsWin();
-                }
-            });
             trayControl.setIconDoubleClickListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
@@ -46,14 +40,9 @@ public class Loader {
                         win.showSettingsWin();
                 }
             });
-            trayControl.setCloseListener(new MouseAdapter() {
-                @Override
-                public void mouseReleased(MouseEvent e) {
-                    //win.stopServiceControl();
-                    win.saveWindowPos();
-                    System.exit(0);
-                }
-            });
+
+            trayControl.setSettingsWindow(win);
+
         } catch (AWTException e) {
             e.printStackTrace();
         }

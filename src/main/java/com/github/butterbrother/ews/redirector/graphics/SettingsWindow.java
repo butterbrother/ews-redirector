@@ -262,7 +262,7 @@ public class SettingsWindow {
     /**
      * Остановка управляющего сервиса
      */
-    public void stopServiceControl() {
+    private void stopServiceControl() {
         if (checkServiceControl()) {
             controller.safeStop();
             try {
@@ -291,7 +291,7 @@ public class SettingsWindow {
     /**
      * Сохраняет позицию окна в файл конфигурации
      */
-    public void saveWindowPos() {
+    void saveWindowPos() {
         settings.setInteger(KEY_WINDOW_HEIGHT, win.getHeight());
         settings.setInteger(KEY_WINDOW_WIDTH, win.getWidth());
         settings.setInteger(KEY_WINDOW_X, win.getX());

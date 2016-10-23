@@ -1,8 +1,9 @@
 package com.github.butterbrother.ews.redirector.graphics;
 
-import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseListener;
 import java.net.URL;
 
 /**
@@ -12,9 +13,9 @@ import java.net.URL;
 public class TrayControl {
     private SystemTray systemTray;
     private TrayIcon icon;
-    private JMenuItem exitItem = new JMenuItem("Exit");
-    private JMenuItem configItem = new JMenuItem("Settings...");
-    private JFrame hiddenDialog = null;
+    private MenuItem exitItem = new MenuItem("Exit");
+    private MenuItem configItem = new MenuItem("Settings...");
+    private SettingsWindow win = null;
 
     public TrayControl() throws AWTException {
         if (!SystemTray.isSupported()) {
@@ -28,16 +29,6 @@ public class TrayControl {
     }
 
     /**
-     * Добавляет слушателя для кнопки конфигурации
-     *
-     * @param listener Слушатель кнопки конфигурации
-     */
-    public void setConfigListener(MouseListener listener) {
-        configItem.addMouseListener(listener);
-    }
-
-
-    /**
      * Добавляет слушателя для иконки.
      * В нашем случае нужно для открытия окна настроек
      * при двойном щелчке по иконке в трее.
@@ -49,13 +40,17 @@ public class TrayControl {
     }
 
     /**
-     * Добавляет слушателя для кнопки завершения работы приложения.
+     * Передает экземпляр окна конфигуратора.
+     * <p>
+     * Передаёт экземпляр окна конфигуратора {@link SettingsWindow} для возможности его открытия,
+     * сохранения конфигурации перед выходом и т.п.
      *
-     * @param listener Слушатель кнопки
+     * @param win экземпляр окна конфигуратора
      */
-    public void setCloseListener(MouseListener listener) {
-        exitItem.addMouseListener(listener);
+    public void setSettingsWindow(SettingsWindow win) {
+        this.win = win;
     }
+
 
     /**
      * Находит подходящую картинку для трея исходя из его размера.
@@ -82,20 +77,41 @@ public class TrayControl {
      * Создаёт контекстное меню трея
      */
     private void createTrayPopupMenu() {
-        final JPopupMenu menu = new JPopupMenu();
-        //PopupMenu menu = new PopupMenu();
-        JMenuItem header = new JMenuItem("EWS redirector");
-        //MenuItem header = new MenuItem();
+        final PopupMenu menu = new PopupMenu();
+
+        MenuItem header = new MenuItem("EWS redirector");
         header.setEnabled(false);
         menu.add(header);
         menu.addSeparator();
+
+        configItem.setActionCommand("config");
         menu.add(configItem);
 
-        hiddenDialog = new JFrame();
-        hiddenDialog.setType(Frame.Type.UTILITY);
-        hiddenDialog.setSize(5, 5);
-
+        exitItem.setActionCommand("exit");
         menu.add(exitItem);
+
+        icon.setPopupMenu(menu);
+
+        ActionListener menuListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                switch (e.getActionCommand()) {
+                    case "config":
+                        win.showSettingsWin();
+                        break;
+
+                    case "exit":
+                        win.saveWindowPos();
+                        System.exit(0);
+                        break;
+                }
+            }
+        };
+
+        configItem.addActionListener(menuListener);
+        exitItem.addActionListener(menuListener);
+
+        /*
         // Костыль. Трей не умеет JPopupMenu
         icon.addMouseListener(new MouseAdapter() {
             @Override
@@ -103,11 +119,11 @@ public class TrayControl {
                 if ((e.getButton() & MouseEvent.BUTTON2) == MouseEvent.BUTTON2 && e.isPopupTrigger()) {
                     menu.setLocation(e.getX(), e.getY());
                     hiddenDialog.setLocation(e.getX(), e.getY());
-                    menu.setInvoker(hiddenDialog);
                     //menu.setInvoker(menu);
 
                     //if (!hiddenDialog.isUndecorated()) hiddenDialog.setUndecorated(true);
                     hiddenDialog.setVisible(true);
+                    menu.setInvoker(hiddenDialog);
                     menu.setVisible(true);
                 }
             }
@@ -117,6 +133,7 @@ public class TrayControl {
         hiddenDialog.addFocusListener(new FocusAdapter() {
                                           @Override
                                           public void focusLost(FocusEvent e) {
+                                              menu.setVisible(false);
                                               hiddenDialog.setVisible(false);
                                           }
           });
@@ -127,6 +144,7 @@ public class TrayControl {
                 hiddenDialog.setVisible(false);
             }
         });
+        */
 
     }
 
