@@ -11,12 +11,12 @@ It also can:
 
 # Screenshots  
 Configuration window:  
-![config-windows](http://vex-host.com/share/integry/github/ews-redirector/redirector_win_config.png)
 ![config-linux](http://vex-host.com/share/integry/github/ews-redirector/redirector_lin_config.png)
+![config-windows](http://vex-host.com/share/integry/github/ews-redirector/redirector_win_config.png) 
 
 Filtering rules:  
+![filters-linux](http://vex-host.com/share/integry/github/ews-redirector/redirector_lin_rules.png) 
 ![filters-windows](http://vex-host.com/share/integry/github/ews-redirector/redirector_win_rules.png)  
-![filters-linux](http://vex-host.com/share/integry/github/ews-redirector/redirector_lin_rules.png)  
 
 Filter configuration:  
 ![filter-config-windows](http://vex-host.com/share/integry/github/ews-redirector/redirector_win_rule.png)  
