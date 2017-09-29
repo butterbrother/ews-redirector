@@ -72,40 +72,42 @@ class SendService extends SafeStopService {
         process:
         {
             while (super.isActive()) {
-                try (ExchangeService service = exchangeConnector.createService()) {
 
-                    while (super.isActive()) {
+                // Пауза перед повторной отправкой
+                try {
+                    Thread.sleep(200);
 
-                        // Пауза перед повторной отправкой
-                        try {
-                            Thread.sleep(200);
+                    // Очищаем треть списка уже переданных каждую секунду
+                    if (sendedMessages.size() > 0)
+                        --sendedFlushCount;
+                    else
+                        sendedFlushCount = 5;
 
-                            // Очищаем треть списка уже переданных каждую секунду
-                            if (sendedMessages.size() > 0)
-                                --sendedFlushCount;
-                            else
-                                sendedFlushCount = 5;
+                    if (sendedFlushCount <= 0) {
+                        sendedFlushCount = 5;
 
-                            if (sendedFlushCount <= 0) {
-                                sendedFlushCount = 5;
+                        int thirdSize = (int) (sendedMessages.size() / 3.0);
+                        if (thirdSize <= sendedMessages.size())
+                            for (int i = 0; i < thirdSize; ++i)
+                                sendedMessages.remove(0);
 
-                                int thirdSize = (int) (sendedMessages.size() / 3.0);
-                                if (thirdSize <= sendedMessages.size())
-                                    for (int i = 0; i < thirdSize; ++i)
-                                        sendedMessages.remove(0);
+                        sendedMessages.trimToSize();
+                    }
+                } catch (InterruptedException e) {
+                    super.safeStop();
+                    break process;
+                }
 
-                                sendedMessages.trimToSize();
-                            }
-                        } catch (InterruptedException e) {
-                            super.safeStop();
-                            break process;
-                        }
+                // Отсылаем все уведомления из очереди
+                while (!messages.isEmpty()) {
+                    if (!super.isActive()) break process;
 
-                        // Отсылаем все уведомления из очереди
-                        while (!messages.isEmpty()) {
-                            if (!super.isActive()) break process;
-
-                            ItemId messageId = messages.pollFirst().getItem();
+                    // Подключаемся к серверу для отправки только если в очереди есть сообщения.
+                    // После чего отключаемся
+                    try (ExchangeService service = exchangeConnector.createService()) {
+                        MessageElement me;
+                        while ((me = messages.pollFirst()) != null) {
+                            ItemId messageId = me.getItem();
 
                             // Пропускаем уже переданные сообщения. Сообщения с одинаковыми Id могут поступать одновременно
                             // с двух разных источников - PullEventService и NewMessageSearchService
@@ -129,18 +131,19 @@ class SendService extends SafeStopService {
                                     emailMessage.setIsRead(true);
                             }
                         }
-                    }
-                } catch (Exception e) {
-                    popup.error("Exchange error (Forward module)", e.getMessage());
-                }
 
-                // Пауза между переподключениями, при получении ошибки
-                if (super.isActive())
-                    try {
-                        Thread.sleep(5000);
-                    } catch (InterruptedException e) {
-                        super.safeStop();
+                    } catch (Exception e) {
+                        popup.error("Exchange error (Forward module)", e.getMessage());
+
+                        // Пауза между переподключениями, при получении ошибки
+                        if (super.isActive())
+                            try {
+                                Thread.sleep(5000);
+                            } catch (InterruptedException inter) {
+                                super.safeStop();
+                            }
                     }
+                }
             }
         }
 

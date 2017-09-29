@@ -40,7 +40,7 @@ public abstract class SafeStopService
      * Установка флага завершения работы сервиса
      * Вызов выполняется по завершению работы потока.
      */
-    protected void wellDone() {
+    void wellDone() {
         done = true;
         active = false;
     }
@@ -48,7 +48,7 @@ public abstract class SafeStopService
     /**
      * Запуск сервиса
      */
-    public void runService() {
+    void runService() {
         currentThread = new Thread(this);
         currentThread.start();
     }

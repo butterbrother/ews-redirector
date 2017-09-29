@@ -10,6 +10,7 @@ import microsoft.exchange.webservices.data.notification.PullSubscription;
 import microsoft.exchange.webservices.data.property.complex.FolderId;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListSet;
 
@@ -60,16 +61,16 @@ class PullEventsService extends SafeStopService {
                 try (ExchangeService service = exchangeConnector.createService()) {
                     successConnection = true;
 
-                    PullSubscription ps = service.subscribeToPullNotifications(folders, 5, null, EventType.NewMail);
+                    PullSubscription ps = service.subscribeToPullNotifications(folders, 1, null, EventType.NewMail);
+                    Calendar expireDate = Calendar.getInstance();
+                    expireDate.add(Calendar.SECOND, 50);
 
                     while (super.isActive()) {
-                        try {
-                            Thread.sleep(200);
-                        } catch (InterruptedException ie) {
-                            super.safeStop();
-                            break processing;
+                        Calendar current = Calendar.getInstance();
+                        if (current.compareTo(expireDate) >= 0) {
+                            System.out.println("DEBUG: notify reader module: subscribe timeout expired. Reconnecting.");
+                            break;
                         }
-
                         eventsResults = ps.getEvents();
 
                         for (ItemEvent event : eventsResults.getItemEvents()) {
@@ -78,6 +79,12 @@ class PullEventsService extends SafeStopService {
                             messages.add(new MessageElement(event.getItemId()));
                         }
 
+                        try {
+                            Thread.sleep(200);
+                        } catch (InterruptedException ie) {
+                            super.safeStop();
+                            break processing;
+                        }
                     }
                 } catch (Exception e) {
 

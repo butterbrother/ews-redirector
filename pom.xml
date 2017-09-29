@@ -4,7 +4,7 @@
     <groupId>com.github.butterbrother.ews.redirector</groupId>
     <artifactId>ews-redirector</artifactId>
     <packaging>jar</packaging>
-    <version>0.2.2</version>
+    <version>0.2.4</version>
     <name>ews-redirector</name>
     <url>http://maven.apache.org</url>
 
@@ -23,10 +23,11 @@
             <version>2.0</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.json/json -->
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20151123</version>
+            <version>20170516</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/javax.xml.ws/jaxws-api -->
