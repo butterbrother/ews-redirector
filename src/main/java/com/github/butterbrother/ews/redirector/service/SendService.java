@@ -3,13 +3,15 @@ package com.github.butterbrother.ews.redirector.service;
 import com.github.butterbrother.ews.redirector.filter.MailFilter;
 import com.github.butterbrother.ews.redirector.graphics.TrayControl;
 import microsoft.exchange.webservices.data.core.ExchangeService;
+import microsoft.exchange.webservices.data.core.enumeration.property.BodyType;
 import microsoft.exchange.webservices.data.core.enumeration.property.WellKnownFolderName;
 import microsoft.exchange.webservices.data.core.service.item.EmailMessage;
-import microsoft.exchange.webservices.data.property.complex.EmailAddress;
-import microsoft.exchange.webservices.data.property.complex.FolderId;
-import microsoft.exchange.webservices.data.property.complex.ItemId;
+import microsoft.exchange.webservices.data.property.complex.*;
+import org.apache.commons.lang3.StringEscapeUtils;
 
 import java.util.ArrayList;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
@@ -28,6 +30,8 @@ class SendService extends SafeStopService {
     private TrayControl.TrayPopup popup;
     private ExchangeConnector exchangeConnector;
     private MailFilter[] filters;
+    private static final String P_OPEN_TAG = "<p style=\"font-size: 10pt; margin: 0px; padding: 0px;\">";
+    private static final String P_CLOSE_TAG = "</p>";
 
     /**
      * Инициализация
@@ -122,8 +126,33 @@ class SendService extends SafeStopService {
                             if ((!emailMessage.getParentFolderId().equals(deletedItems)) && (!emailMessage.getIsRead())) {
                                 if (MailFilter.filtrate(filters, emailMessage)) {
                                     System.out.println("DEBUG: message \"" + emailMessage.getSubject() + "\" filtered");
-                                } else
-                                    emailMessage.forward(null, recipientEmail);
+                                } else {
+
+                                    StringBuilder bodyPrefix = new StringBuilder();
+
+                                    EmailAddress from = emailMessage.getFrom();
+                                    if (from != null) {
+                                        bodyPrefix
+                                                .append(P_OPEN_TAG)
+                                                .append("From: ")
+                                                .append(StringEscapeUtils.escapeHtml4(from.toString()))
+                                                .append(P_CLOSE_TAG);
+                                    }
+                                    Optional<String> recipients = emailAddressesEnumerator(emailMessage.getToRecipients());
+                                    recipients.ifPresent(res -> bodyPrefix.append(P_OPEN_TAG).append("To: ").append(res).append(P_CLOSE_TAG));
+                                    Optional<String> cc = emailAddressesEnumerator(emailMessage.getCcRecipients());
+                                    cc.ifPresent(res -> bodyPrefix.append(P_OPEN_TAG).append("CC: ").append(res).append(P_CLOSE_TAG));
+                                    Optional<String> bcc = emailAddressesEnumerator(emailMessage.getBccRecipients());
+                                    bcc.ifPresent(res -> bodyPrefix.append(P_OPEN_TAG).append("BCC: ").append(res).append(P_CLOSE_TAG));
+                                    Optional<String> reply = emailAddressesEnumerator(emailMessage.getReplyTo());
+                                    reply.ifPresent(res -> bodyPrefix.append(P_OPEN_TAG).append("Reply: ").append(res).append(P_CLOSE_TAG));
+
+                                    MessageBody body = new MessageBody();
+                                    body.setBodyType(BodyType.HTML);
+                                    body.setText(bodyPrefix.toString());
+
+                                    emailMessage.forward(body, recipientEmail);
+                                }
 
                                 if (deleteRedirected)
                                     emailMessage.move(deletedItems);
@@ -148,5 +177,24 @@ class SendService extends SafeStopService {
         }
 
         super.wellDone();
+    }
+
+    /**
+     * Извлекает список адресов и коллекции адресов и преобразует в строку, где эти адреса перечислены через
+     * точку с запятой
+     *
+     * @param emails список адресов в виде коллекции
+     * @return список адресов в виде строки
+     */
+    private Optional<String> emailAddressesEnumerator(EmailAddressCollection emails) {
+        if (emails != null) {
+            return emails.getItems()
+                    .stream()
+                    .filter(Objects::nonNull)
+                    .map(mail -> StringEscapeUtils.escapeHtml4(mail.toString()))
+                    .reduce((m1, m2) -> m1 + "; " + m2);
+        } else {
+            return Optional.empty();
+        }
     }
 }

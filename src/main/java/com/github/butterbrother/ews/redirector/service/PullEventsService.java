@@ -68,7 +68,6 @@ class PullEventsService extends SafeStopService {
                     while (super.isActive()) {
                         Calendar current = Calendar.getInstance();
                         if (current.compareTo(expireDate) >= 0) {
-                            System.out.println("DEBUG: notify reader module: subscribe timeout expired. Reconnecting.");
                             break;
                         }
                         eventsResults = ps.getEvents();
