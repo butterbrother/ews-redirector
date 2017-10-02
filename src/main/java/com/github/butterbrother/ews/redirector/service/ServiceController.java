@@ -48,6 +48,7 @@ public class ServiceController extends SafeStopService {
 
         connector = new ExchangeConnector(domain, login, password, email, url, enableAuto);
         super.runService();
+
     }
 
     /**
