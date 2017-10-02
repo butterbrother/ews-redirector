@@ -82,7 +82,7 @@ public class TrayControl {
     private void createTrayPopupMenu() {
         final PopupMenu menu = new PopupMenu();
 
-        MenuItem header = new MenuItem("EWS redirector (v0.2.2)");
+        MenuItem header = new MenuItem("EWS redirector (v0.2.4)");
         header.setEnabled(false);
         menu.add(header);
         menu.addSeparator();
