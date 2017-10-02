@@ -1,6 +1,5 @@
 package com.github.butterbrother.ews.redirector.service;
 
-import com.github.butterbrother.ews.redirector.graphics.TrayControl;
 import microsoft.exchange.webservices.data.core.ExchangeService;
 import microsoft.exchange.webservices.data.core.enumeration.notification.EventType;
 import microsoft.exchange.webservices.data.core.enumeration.property.WellKnownFolderName;
@@ -13,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.logging.Logger;
 
 /**
  * Сервис обработки входящих сообщений.
@@ -24,23 +24,24 @@ import java.util.concurrent.ConcurrentSkipListSet;
  */
 class PullEventsService extends SafeStopService {
     private ExchangeConnector exchangeConnector;
-    private TrayControl.TrayPopup popup;
+    private Notificator notificator;
     private ConcurrentSkipListSet<MessageElement> messages;
+    private Logger logger = Logger.getLogger(this.getClass().getSimpleName());
 
     /**
      * Инициализация
      *
      * @param connector Exchange
      * @param messages  очередь сообщений
-     * @param popup     трей для передачи аварийных сообщений
+     * @param notificator     трей для передачи аварийных сообщений
      */
     PullEventsService(ExchangeConnector connector,
                       ConcurrentSkipListSet<MessageElement> messages,
-                      TrayControl.TrayPopup popup) {
+                      Notificator notificator) {
         super();
         this.exchangeConnector = connector;
         this.messages = messages;
-        this.popup = popup;
+        this.notificator = notificator;
 
         super.runService();
     }
@@ -74,7 +75,7 @@ class PullEventsService extends SafeStopService {
 
                         for (ItemEvent event : eventsResults.getItemEvents()) {
                             if (!super.isActive()) break;
-                            System.out.println("DEBUG: notify reader module: Add one new message");
+                            logger.info("Add one new message");
                             messages.add(new MessageElement(event.getItemId()));
                         }
 
@@ -86,13 +87,13 @@ class PullEventsService extends SafeStopService {
                         }
                     }
                 } catch (Exception e) {
-
                     /*
                      * Отображаем ошибку только при неудачном подключении, а не спустя таймаута push-уведомлений.
                      * Если ошибка авторизации - это увидим при повторной попытке, когда service будет null.
                      */
                     if (!successConnection) {
-                        popup.error("Exchange error (Notify reader module)", e.getMessage());
+                        notificator.error("Exchange error (Notify reader module)", e.getMessage());
+                        logger.severe("Exchange error: " + e.getMessage());
 
                         try {
                             Thread.sleep(5000);
@@ -100,6 +101,8 @@ class PullEventsService extends SafeStopService {
                             super.safeStop();
                             break processing;
                         }
+                    } else {
+                        logger.warning("Exchange error: " + e.getMessage());
                     }
                 }
             }

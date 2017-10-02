@@ -8,6 +8,7 @@ import microsoft.exchange.webservices.data.credential.ExchangeCredentials;
 import microsoft.exchange.webservices.data.credential.WebCredentials;
 
 import java.net.URI;
+import java.util.logging.Logger;
 
 /**
  * Осуществляет проверку возможности подключения к EWS.
@@ -16,7 +17,8 @@ import java.net.URI;
 class ExchangeConnector {
     private ExchangeCredentials credentials;
     private String email;
-    private URI url;
+    private String url;
+    private String autoDiscoverUrl = "";
     private boolean enableAutodiscover;
 
     /**
@@ -28,7 +30,6 @@ class ExchangeConnector {
      * @param email              e-mail. Используется только если указана необходимость автоматического определения EWS URL
      * @param url                url EWS. Опционален. Если не указан - будет включено автоматическое определение
      * @param enableAutodiscover Необходимость автоматического определения EWS URL
-     * @throws Exception
      */
     ExchangeConnector(
             String domain,
@@ -37,8 +38,9 @@ class ExchangeConnector {
             String email,
             String url,
             boolean enableAutodiscover
-    ) throws Exception {
+    ) {
         this.email = email;
+        this.url = url;
 
         this.enableAutodiscover = enableAutodiscover;
         if (url.isEmpty() && !enableAutodiscover)
@@ -49,20 +51,6 @@ class ExchangeConnector {
         } else {
             credentials = new WebCredentials(login, password, domain);
         }
-
-        ExchangeService connectionTest = new ExchangeService(ExchangeVersion.Exchange2010_SP2);
-        connectionTest.setCredentials(credentials);
-
-        if (this.enableAutodiscover) {
-            connectionTest.autodiscoverUrl(email, new RedirectionUrlCallback());
-            this.url = connectionTest.getUrl();
-        } else {
-            this.url = new URI(url);
-            connectionTest.setUrl(this.url);
-        }
-
-        System.out.println("DEBUG: connection test, get inbox mail count");
-        System.out.println(Folder.bind(connectionTest, WellKnownFolderName.Inbox).getTotalCount());
     }
 
     /**
@@ -76,25 +64,35 @@ class ExchangeConnector {
     ExchangeService createService() throws Exception {
         ExchangeService service = new ExchangeService(ExchangeVersion.Exchange2010_SP2);
         service.setCredentials(credentials);
-        if (enableAutodiscover)
+        if (enableAutodiscover) {
             service.autodiscoverUrl(email, new RedirectionUrlCallback());
-        else
-            service.setUrl(url);
+            autoDiscoverUrl = service.getUrl().toString();
+        } else {
+            service.setUrl(new URI(url));
+        }
 
-        /*
-        System.out.println("DEBUG: connection test, get inbox mail count");
-        System.out.println(Folder.bind(service, WellKnownFolderName.Inbox).getTotalCount());
-        */
+        Logger.getLogger(this.getClass().getSimpleName())
+                .info("Connection test, get inbox mail count: " +
+                        Folder.bind(service, WellKnownFolderName.Inbox).getTotalCount());
 
         return service;
     }
 
     /**
-     * Возвращает используемый URL
+     * Возвращает найденный Autodiscover URL
      *
      * @return EWS URL
      */
-    String getCurrentUrl() {
-        return url.toString();
+    String getAutoDiscoverUrl() {
+        return autoDiscoverUrl;
+    }
+
+    /**
+     * Возвращает статус автонахождения EWS URL
+     *
+     * @return статус автонахождения, задающийся галочкой в интерфейсе
+     */
+    public boolean isEnableAutodiscover() {
+        return enableAutodiscover;
     }
 }

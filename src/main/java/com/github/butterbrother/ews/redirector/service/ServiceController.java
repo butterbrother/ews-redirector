@@ -1,9 +1,9 @@
 package com.github.butterbrother.ews.redirector.service;
 
 import com.github.butterbrother.ews.redirector.filter.MailFilter;
-import com.github.butterbrother.ews.redirector.graphics.TrayControl;
 
 import javax.swing.*;
+import java.util.function.Consumer;
 
 /**
  * Непосредственно управляет потоками-обработчиками.
@@ -17,9 +17,10 @@ public class ServiceController extends SafeStopService {
 
     private JButton startStopButton;
     private JButton applyButton;
+    private JTextField urlField;
     private String recipient;
     private boolean deleteRedirected;
-    private TrayControl.TrayPopup popup;
+    private Notificator notificator;
     private MailFilter[] filters;
 
     public ServiceController(
@@ -30,7 +31,7 @@ public class ServiceController extends SafeStopService {
             String password,
             String url,
             boolean enableAuto,
-            TrayControl.TrayPopup popup,
+            Notificator notificator,
             JTextField urlField,
             JButton startStopButton,
             JButton applyButton,
@@ -41,18 +42,12 @@ public class ServiceController extends SafeStopService {
         this.applyButton = applyButton;
         this.recipient = recipient;
         this.deleteRedirected = deleteRedirected;
-        this.popup = popup;
+        this.notificator = notificator;
         this.filters = filters;
+        this.urlField = urlField;
 
-        try {
-            connector = new ExchangeConnector(domain, login, password, email, url, enableAuto);
-            urlField.setText(connector.getCurrentUrl());
-            super.runService();
-        } catch (Exception startException) {
-            popup.error("Connection error", startException.getMessage());
-            super.wellDone();
-            safeStop();
-        }
+        connector = new ExchangeConnector(domain, login, password, email, url, enableAuto);
+        super.runService();
     }
 
     /**
@@ -62,12 +57,16 @@ public class ServiceController extends SafeStopService {
     public void run() {
         if (connector != null) {
             try {
-                send = new SendService(connector, deleteRedirected, recipient, popup, filters);
-                pullEvents = new PullEventsService(connector, send.getQueue(), popup);
-                newMessages = new NewMessagesSearchService(connector, popup, send.getQueue());
+                send = new SendService(connector, deleteRedirected, recipient, notificator, filters);
+                pullEvents = new PullEventsService(connector, send.getQueue(), notificator);
+                newMessages = new NewMessagesSearchService(connector, notificator, send.getQueue());
 
                 startStopButton.setText("Stop");
                 while (super.isActive()) {
+
+                    if (connector.isEnableAutodiscover() && !urlField.isEnabled())
+                        urlField.setText(connector.getAutoDiscoverUrl());
+
                     try {
                         Thread.sleep(200);
                         if (send.isDone() || pullEvents.isDone() || newMessages.isDone())
@@ -79,7 +78,7 @@ public class ServiceController extends SafeStopService {
                     }
                 }
             } catch (Exception e) {
-                popup.error("Connection error", e.getMessage());
+                notificator.error("Connection error", e.getMessage());
                 if (super.isActive())
                     safeStop();
             }
@@ -99,35 +98,21 @@ public class ServiceController extends SafeStopService {
         startStopButton.setEnabled(false);
         applyButton.setEnabled(false);
 
-        if (pullEvents != null) {
-            pullEvents.safeStop();
-            while (!pullEvents.isDone()) {
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException ignore) {
+        Consumer<SafeStopService> st = srv -> {
+            if (srv != null) {
+                srv.safeStop();
+                while (!srv.isDone()) {
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException ignore) {
+                    }
                 }
             }
-        }
+        };
 
-        if (newMessages != null) {
-            newMessages.safeStop();
-            while (!newMessages.isDone()) {
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException ignore) {
-                }
-            }
-        }
-
-        if (send != null) {
-            send.safeStop();
-            while (!send.isDone()) {
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException ignore) {
-                }
-            }
-        }
+        st.accept(pullEvents);
+        st.accept(newMessages);
+        st.accept(send);
 
         startStopButton.setText("Start");
         startStopButton.setEnabled(true);

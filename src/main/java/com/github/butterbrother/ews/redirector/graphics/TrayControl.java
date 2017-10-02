@@ -1,10 +1,12 @@
 package com.github.butterbrother.ews.redirector.graphics;
 
+import com.github.butterbrother.ews.redirector.service.Notificator;
+
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseListener;
 import java.net.URL;
+import java.util.logging.Logger;
 
 /**
  * Осуществляет загрузку иконки в системный трей.
@@ -16,10 +18,11 @@ public class TrayControl {
     private MenuItem exitItem = new MenuItem("Exit");
     private MenuItem configItem = new MenuItem("Settings...");
     private SettingsWindow win = null;
+    private Logger logger = Logger.getLogger(this.getClass().getSimpleName());
 
     public TrayControl() throws AWTException {
         if (!SystemTray.isSupported()) {
-            System.out.println("System tray is not supported");
+            logger.severe("System tray is not supported");
             System.exit(1);
         }
         systemTray = SystemTray.getSystemTray();
@@ -92,60 +95,21 @@ public class TrayControl {
 
         icon.setPopupMenu(menu);
 
-        ActionListener menuListener = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                switch (e.getActionCommand()) {
-                    case "config":
-                        win.showSettingsWin();
-                        break;
+        ActionListener menuListener = e -> {
+            switch (e.getActionCommand()) {
+                case "config":
+                    win.showSettingsWin();
+                    break;
 
-                    case "exit":
-                        win.saveWindowPos();
-                        System.exit(0);
-                        break;
-                }
+                case "exit":
+                    win.saveWindowPos();
+                    System.exit(0);
+                    break;
             }
         };
 
         configItem.addActionListener(menuListener);
         exitItem.addActionListener(menuListener);
-
-        /*
-        // Костыль. Трей не умеет JPopupMenu
-        icon.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                if ((e.getButton() & MouseEvent.BUTTON2) == MouseEvent.BUTTON2 && e.isPopupTrigger()) {
-                    menu.setLocation(e.getX(), e.getY());
-                    hiddenDialog.setLocation(e.getX(), e.getY());
-                    //menu.setInvoker(menu);
-
-                    //if (!hiddenDialog.isUndecorated()) hiddenDialog.setUndecorated(true);
-                    hiddenDialog.setVisible(true);
-                    menu.setInvoker(hiddenDialog);
-                    menu.setVisible(true);
-                }
-            }
-        });
-
-        // Ещё один костыль, на этот раз для того, что бы прятать меню при снятии фокуса
-        hiddenDialog.addFocusListener(new FocusAdapter() {
-                                          @Override
-                                          public void focusLost(FocusEvent e) {
-                                              menu.setVisible(false);
-                                              hiddenDialog.setVisible(false);
-                                          }
-          });
-
-        menu.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentHidden(ComponentEvent e) {
-                hiddenDialog.setVisible(false);
-            }
-        });
-        */
-
     }
 
     /**
@@ -158,7 +122,7 @@ public class TrayControl {
      */
     private void showPopup(String caption, String text, TrayIcon.MessageType type) {
         icon.displayMessage(caption, text, type);
-        System.out.println("DEBUG: Tray control, show popup: [" + caption + "] " + text);
+        logger.info("Show popup: [" + caption + "] " + text);
     }
 
     public TrayPopup getTrayPopup() {
@@ -168,13 +132,14 @@ public class TrayControl {
     /**
      * Класс для отображения нотификаций в трее
      */
-    public class TrayPopup {
+    public class TrayPopup implements Notificator {
         /**
          * Показывает ошибку из трея
          *
          * @param caption заголовок сообщения
          * @param text    текст сообщения
          */
+        @Override
         public void error(String caption, String text) {
             showPopup(caption, text, TrayIcon.MessageType.ERROR);
         }

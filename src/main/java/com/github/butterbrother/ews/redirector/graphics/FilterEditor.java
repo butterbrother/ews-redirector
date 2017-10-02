@@ -7,10 +7,9 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.logging.Logger;
 
 /**
  * Управление правилом фильтрации
@@ -37,6 +36,7 @@ public class FilterEditor {
     private DefaultTableModel RulesTableModel;
     private JFrame frame;
     private int rowHeight = 0;
+    private Logger logger = Logger.getLogger(this.getClass().getSimpleName());
 
     /**
      * Создание окна редактирования фильтров
@@ -51,80 +51,61 @@ public class FilterEditor {
         frame.setLocation(posX, posY);
         frame.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
 
-        AddRuleButton.addActionListener(new ActionListener() {
+        AddRuleButton.addActionListener(e -> {
+            stopRuleEditing();
 
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                stopRuleEditing();
+            RulesTableModel.addRow(new String[]{FilterRule.RuleTypes[0], FilterRule.RuleOperators[0], ""});
+        });
 
-                RulesTableModel.addRow(new String[]{FilterRule.RuleTypes[0], FilterRule.RuleOperators[0], ""});
+        RemoveRuleButton.addActionListener(e -> {
+            stopRuleEditing();
+
+            if (RulesTable.getSelectedRow() >= 0) {
+                RulesTableModel.removeRow(RulesTable.getSelectedRow());
             }
         });
 
-        RemoveRuleButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                stopRuleEditing();
+        DropRulesButton.addActionListener(e -> {
+            int result = JOptionPane.showConfirmDialog(null, "This action drop all rules in filter. Continue?", "Warning", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
 
-                if (RulesTable.getSelectedRow() >= 0) {
-                    RulesTableModel.removeRow(RulesTable.getSelectedRow());
-                }
-            }
-        });
+            stopRuleEditing();
 
-        DropRulesButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int result = JOptionPane.showConfirmDialog(null, "This action drop all rules in filter. Continue?", "Warning", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
-
-                stopRuleEditing();
-
-                if (result == JOptionPane.OK_OPTION) {
-                    dropRulesTable();
-                }
+            if (result == JOptionPane.OK_OPTION) {
+                dropRulesTable();
             }
         });
 
         this.owner = owner;
 
         // Сохранение фильтра
-        SaveFilterButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                stopRuleEditing();
+        SaveFilterButton.addActionListener(e -> {
+            stopRuleEditing();
 
-                String rawRules[][] = new String[RulesTableModel.getRowCount()][RulesTableModel.getColumnCount()];
-                System.out.println("DEBUG: filter table data:");
-                for (int row = 0; row < RulesTableModel.getRowCount(); ++row) {
-                    for (int column = 0; column < RulesTableModel.getColumnCount(); ++column)
-                        try {
-                            rawRules[row][column] = RulesTableModel.getValueAt(row, column).toString();
-                            System.out.print("[" + rawRules[row][column] + "]");
-                        } catch (NullPointerException noData) {
-                            rawRules[row][column] = "";
-                            System.out.print("[null]");
-                        }
-                    System.out.println();
-                }
-
-                owner.doneFilterEditing(
-                        new MailFilter(
-                                FilterNameInput.getText().trim(),
-                                rawRules,
-                                RuleOperatorList.getSelectedIndex()
-                        )
-                );
-                frame.setVisible(false);
+            String rawRules[][] = new String[RulesTableModel.getRowCount()][RulesTableModel.getColumnCount()];
+            logger.info("DEBUG: filter table data:");
+            for (int row = 0; row < RulesTableModel.getRowCount(); ++row) {
+                for (int column = 0; column < RulesTableModel.getColumnCount(); ++column)
+                    try {
+                        rawRules[row][column] = RulesTableModel.getValueAt(row, column).toString();
+                        logger.info("[" + rawRules[row][column] + "]");
+                    } catch (NullPointerException noData) {
+                        rawRules[row][column] = "";
+                        logger.info("[null]");
+                    }
+                System.out.println();
             }
+
+            owner.doneFilterEditing(
+                    new MailFilter(
+                            FilterNameInput.getText().trim(),
+                            rawRules,
+                            RuleOperatorList.getSelectedIndex()
+                    )
+            );
+            frame.setVisible(false);
         });
         // Кнопка отмены. Аналогично закрытию окна
-        CancelFilterButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                cancelEditing();
-            }
-        });
+        CancelFilterButton.addActionListener(e -> cancelEditing());
         // Кнопка закрытия окна. Считается, что не внести изменения
         frame.addWindowListener(new WindowAdapter() {
             @Override

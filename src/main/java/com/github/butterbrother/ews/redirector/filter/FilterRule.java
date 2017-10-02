@@ -1,5 +1,7 @@
 package com.github.butterbrother.ews.redirector.filter;
 
+import java.util.logging.Logger;
+
 /**
  * Правило для фильтрации сообщения.
  * Из таких правил формируется одиночный фильтр.
@@ -16,6 +18,7 @@ public class FilterRule {
     private static final int OPERATOR_NOT_EQUALS = 1;
     private static final int OPERATOR_CONTAINS = 2;
     private static final int OPERATOR_NOT_CONTAINS = 3;
+    private static Logger logger = Logger.getLogger(FilterRule.class.getSimpleName());
 
     // Порядок должен соответствовать числовым константам, т.к. используется для списка
     public static final String[] RuleTypes = {
@@ -49,8 +52,8 @@ public class FilterRule {
      * @param rawRule Строковое правило из таблицы
      */
     FilterRule(String[] rawRule) {
-        System.out.print("DEBUG: creating rule. Data in array: ");
-        for (String item : rawRule) System.out.print("[" + item + "]");
+        logger.info("Creating rule. Data in array: ");
+        for (String item : rawRule) logger.info("[" + item + "]");
         System.out.println();
 
         ruleType = -1;
@@ -58,19 +61,19 @@ public class FilterRule {
         for (int i = 0; i < RuleTypes.length; ++i) {
             if (rawRule[0].equals(RuleTypes[i])) {
                 ruleType = i;
-                System.out.println("DEBUG: rule type is " + RuleTypes[ruleType]);
+                logger.info("Rule type is " + RuleTypes[ruleType]);
                 break;
             }
         }
         for (int i = 0; i < RuleOperators.length; ++i) {
             if (rawRule[1].equals(RuleOperators[i])) {
                 ruleOperator = i;
-                System.out.println("DEBUG: rule operator is " + RuleOperators[ruleOperator]);
+                logger.info("Rule operator is " + RuleOperators[ruleOperator]);
                 break;
             }
         }
         ruleValue = rawRule[2].trim().toLowerCase();
-        System.out.println("DEBUG: rule value is " + ruleValue);
+        logger.info("Rule value is " + ruleValue);
         if (ruleType < 0 || ruleOperator < 0)
             throw new ArrayIndexOutOfBoundsException();
     }

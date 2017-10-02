@@ -2,12 +2,15 @@ package com.github.butterbrother.ews.redirector;
 
 import com.github.butterbrother.ews.redirector.graphics.SettingsWindow;
 import com.github.butterbrother.ews.redirector.graphics.TrayControl;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
+import java.io.IOException;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 /**
  * Запуск приложения начинается здесь.
@@ -16,6 +19,14 @@ import java.awt.event.MouseEvent;
 public class Loader {
 
     public static void main(String args[]) {
+        try {
+            LogManager.getLogManager().readConfiguration(Loader.class.getResourceAsStream("/logger.properties"));
+        } catch (IOException warn) {
+            System.err.println("WARNING: config file not found");
+        }
+
+        Logger logger = Logger.getLogger("Global");
+
         // Пытаемся задействовать системный внешний вид. Linux - GTK+, Windows - нативный вид
         try {
             if (System.getProperty("os.name").toLowerCase().contains("win")) {
@@ -26,6 +37,8 @@ public class Loader {
                 UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
             }
         } catch (Exception ignore) {
+            logger.severe(ignore.getMessage());
+            logger.severe(ExceptionUtils.getStackTrace(ignore));
         }
 
         try {
@@ -44,7 +57,8 @@ public class Loader {
             trayControl.setSettingsWindow(win);
 
         } catch (AWTException e) {
-            e.printStackTrace();
+            logger.severe(e.getMessage());
+            logger.severe(ExceptionUtils.getStackTrace(e));
         }
     }
 }

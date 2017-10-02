@@ -1,6 +1,5 @@
 package com.github.butterbrother.ews.redirector.service;
 
-import com.github.butterbrother.ews.redirector.graphics.TrayControl;
 import microsoft.exchange.webservices.data.core.ExchangeService;
 import microsoft.exchange.webservices.data.core.enumeration.property.WellKnownFolderName;
 import microsoft.exchange.webservices.data.core.enumeration.search.LogicalOperator;
@@ -14,6 +13,7 @@ import microsoft.exchange.webservices.data.search.ItemView;
 import microsoft.exchange.webservices.data.search.filter.SearchFilter;
 
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.logging.Logger;
 
 /**
  * Сервис обработки входящих сообщений.
@@ -24,16 +24,17 @@ import java.util.concurrent.ConcurrentSkipListSet;
 class NewMessagesSearchService extends SafeStopService {
 
     private ExchangeConnector exchangeConnector;
-    private TrayControl.TrayPopup popup;
+    private Notificator notificator;
     private ConcurrentSkipListSet<MessageElement> messages;
+    private Logger logger = Logger.getLogger(this.getClass().getSimpleName());
 
     NewMessagesSearchService(ExchangeConnector exchangeConnector,
-                             TrayControl.TrayPopup popup,
+                             Notificator notificator,
                              ConcurrentSkipListSet<MessageElement> messages
     ) {
         super();
         this.exchangeConnector = exchangeConnector;
-        this.popup = popup;
+        this.notificator = notificator;
         this.messages = messages;
 
         super.runService();
@@ -61,11 +62,12 @@ class NewMessagesSearchService extends SafeStopService {
                         if (!super.isActive()) break;
                         if (item.getSchema().equals(EmailMessageSchema.Instance)) {
                             messages.add(new MessageElement(item.getId()));
-                            System.out.println("DEBUG: new mail watch: Add one new message");
+                            logger.info("Add one new message");
                         }
                     }
                 } catch (Exception msgWorkExc) {
-                    popup.error("Exchange error (New mail watch module)", msgWorkExc.getMessage());
+                    notificator.error("Exchange error (New mail watch module)", msgWorkExc.getMessage());
+                    logger.severe("Exchange error: " + msgWorkExc.getMessage());
                 }
                 try {
                     Thread.sleep(10000);
@@ -75,7 +77,8 @@ class NewMessagesSearchService extends SafeStopService {
                 }
             }
         } catch (ServiceLocalException se) {
-            popup.error("Exchange error (New mail watch module)", se.getMessage());
+            notificator.error("Exchange error (New mail watch module)", se.getMessage());
+            logger.severe("Exchange error: " + se.getMessage());
         }
 
         super.wellDone();

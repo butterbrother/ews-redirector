@@ -1,7 +1,6 @@
 package com.github.butterbrother.ews.redirector.service;
 
 import com.github.butterbrother.ews.redirector.filter.MailFilter;
-import com.github.butterbrother.ews.redirector.graphics.TrayControl;
 import microsoft.exchange.webservices.data.core.ExchangeService;
 import microsoft.exchange.webservices.data.core.enumeration.property.BodyType;
 import microsoft.exchange.webservices.data.core.enumeration.property.WellKnownFolderName;
@@ -13,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.logging.Logger;
 
 /**
  * Осуществляет отправку переадресованных сообщений.
@@ -24,14 +24,15 @@ import java.util.concurrent.ConcurrentSkipListSet;
  */
 class SendService extends SafeStopService {
     private ConcurrentSkipListSet<MessageElement> messages = new ConcurrentSkipListSet<>();
-    private ArrayList<ItemId> sendedMessages = new ArrayList<>();   // Прочитанные/пересланные сообщения
+    private ArrayList<ItemId> sentMessages = new ArrayList<>();   // Прочитанные/пересланные сообщения
     private boolean deleteRedirected;
     private EmailAddress recipientEmail;
-    private TrayControl.TrayPopup popup;
+    private Notificator notificator;
     private ExchangeConnector exchangeConnector;
     private MailFilter[] filters;
     private static final String P_OPEN_TAG = "<p style=\"font-size: 10pt; margin: 0px; padding: 0px;\">";
     private static final String P_CLOSE_TAG = "</p>";
+    private Logger logger = Logger.getLogger(this.getClass().getSimpleName());
 
     /**
      * Инициализация
@@ -39,19 +40,19 @@ class SendService extends SafeStopService {
      * @param connector        EWS
      * @param deleteRedirected удалять перенаправленные
      * @param recipientEmail   e-mail получателя
-     * @param popup            трей для передачи аварийных сообщений
+     * @param notificator            трей для передачи аварийных сообщений
      */
     SendService(ExchangeConnector connector,
                 boolean deleteRedirected,
                 String recipientEmail,
-                TrayControl.TrayPopup popup,
+                Notificator notificator,
                 MailFilter[] filters) {
         super();
         this.filters = filters;
         this.exchangeConnector = connector;
         this.deleteRedirected = deleteRedirected;
         this.recipientEmail = new EmailAddress(recipientEmail);
-        this.popup = popup;
+        this.notificator = notificator;
 
         super.runService();
     }
@@ -71,7 +72,7 @@ class SendService extends SafeStopService {
     public void run() {
         FolderId deletedItems = new FolderId(WellKnownFolderName.DeletedItems);
 
-        int sendedFlushCount = 5;
+        int sentFlushCount = 5;
 
         process:
         {
@@ -82,20 +83,20 @@ class SendService extends SafeStopService {
                     Thread.sleep(200);
 
                     // Очищаем треть списка уже переданных каждую секунду
-                    if (sendedMessages.size() > 0)
-                        --sendedFlushCount;
+                    if (sentMessages.size() > 0)
+                        --sentFlushCount;
                     else
-                        sendedFlushCount = 5;
+                        sentFlushCount = 5;
 
-                    if (sendedFlushCount <= 0) {
-                        sendedFlushCount = 5;
+                    if (sentFlushCount <= 0) {
+                        sentFlushCount = 5;
 
-                        int thirdSize = (int) (sendedMessages.size() / 3.0);
-                        if (thirdSize <= sendedMessages.size())
+                        int thirdSize = (int) (sentMessages.size() / 3.0);
+                        if (thirdSize <= sentMessages.size())
                             for (int i = 0; i < thirdSize; ++i)
-                                sendedMessages.remove(0);
+                                sentMessages.remove(0);
 
-                        sendedMessages.trimToSize();
+                        sentMessages.trimToSize();
                     }
                 } catch (InterruptedException e) {
                     super.safeStop();
@@ -115,17 +116,17 @@ class SendService extends SafeStopService {
 
                             // Пропускаем уже переданные сообщения. Сообщения с одинаковыми Id могут поступать одновременно
                             // с двух разных источников - PullEventService и NewMessageSearchService
-                            if (sendedMessages.contains(messageId))
+                            if (sentMessages.contains(messageId))
                                 continue;
 
-                            sendedMessages.add(messageId);   // Добавляем во временный список прочитанных
+                            sentMessages.add(messageId);   // Добавляем во временный список прочитанных
 
                             EmailMessage emailMessage = EmailMessage.bind(service, messageId);
 
                             // Обрабатываем только непрочитанные из входящих
                             if ((!emailMessage.getParentFolderId().equals(deletedItems)) && (!emailMessage.getIsRead())) {
                                 if (MailFilter.filtrate(filters, emailMessage)) {
-                                    System.out.println("DEBUG: message \"" + emailMessage.getSubject() + "\" filtered");
+                                    logger.info("Message \"" + emailMessage.getSubject() + "\" filtered");
                                 } else {
 
                                     StringBuilder bodyPrefix = new StringBuilder();
@@ -152,6 +153,7 @@ class SendService extends SafeStopService {
                                     body.setText(bodyPrefix.toString());
 
                                     emailMessage.forward(body, recipientEmail);
+                                    logger.info("Message \"" + emailMessage.getSubject() + "\" forwarded");
                                 }
 
                                 if (deleteRedirected)
@@ -162,7 +164,8 @@ class SendService extends SafeStopService {
                         }
 
                     } catch (Exception e) {
-                        popup.error("Exchange error (Forward module)", e.getMessage());
+                        notificator.error("Exchange error (Forward module)", e.getMessage());
+                        logger.severe("Exchange error: " + e.getMessage());
 
                         // Пауза между переподключениями, при получении ошибки
                         if (super.isActive())

@@ -7,6 +7,7 @@ import microsoft.exchange.webservices.data.property.complex.EmailAddressCollecti
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Рабочий фильтр для проверки и фильтрации
@@ -20,6 +21,7 @@ public class MailFilter {
     // public static final String FILTER_NAME = "name";
     public static final String FILTER_OPERATOR = "operator";
     public static final String FILTER_RULES = "rules";
+    private static final Logger logger = Logger.getLogger(MailFilter.class.getSimpleName());
 
     private String name;
     private int operator;
@@ -46,11 +48,11 @@ public class MailFilter {
             try {
                 result.add(new FilterRule(rawRule));
             } catch (ArrayIndexOutOfBoundsException ignore) {
-                System.out.print("DEBUG: rule dropped:");
+                logger.info("Rule dropped:");
                 for (String i : rawRule) {
-                    System.out.print("[" + i + "]");
+                    logger.info("[" + i + "]");
                 }
-                System.out.println(ignore.getMessage());
+                logger.info(ignore.getMessage());
             }
         }
 

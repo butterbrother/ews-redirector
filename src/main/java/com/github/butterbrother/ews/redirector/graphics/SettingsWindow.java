@@ -6,11 +6,13 @@ import com.github.butterbrother.ews.redirector.service.ServiceController;
 import org.json.JSONException;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.LinkedList;
+import java.util.logging.Logger;
 
 /**
  * Окно с параметрами.
@@ -82,6 +84,8 @@ public class SettingsWindow {
     // Текущий редактируемый фильтр
     private int edited = -1;
 
+    private Logger logger = Logger.getLogger(this.getClass().getSimpleName());
+
     public SettingsWindow(final Settings settings, final TrayControl.TrayPopup popup) {
         this.settings = settings;
         this.popup = popup;
@@ -106,45 +110,31 @@ public class SettingsWindow {
             }
         });
         // Активация автоопределения EWS URL
-        AutoDiscover.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                URLInput.setEnabled(!AutoDiscover.isSelected());
-            }
-        });
+        AutoDiscover.addChangeListener(e -> URLInput.setEnabled(!AutoDiscover.isSelected()));
         // Применение настроек
-        ApplyButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                saveConnectionSettings();
-                if (checkServiceControl())
-                    restartService();
-            }
+        ApplyButton.addActionListener(e -> {
+            saveConnectionSettings();
+            if (checkServiceControl())
+                restartService();
         });
         // Кнопка выхода
-        ExitButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                stopServiceControl();
-                saveWindowPos();
-                System.exit(0);
-            }
+        ExitButton.addActionListener(e -> {
+            stopServiceControl();
+            saveWindowPos();
+            System.exit(0);
         });
         // Запуск и останов
         // При останове элементы управления разблокируются сервисом
-        StartStopButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (checkServiceControl()) {
-                    stopServiceControl();
-                } else {
-                    StartStopButton.setEnabled(false);
-                    ApplyButton.setEnabled(false);
-                    createServiceControl();
-                    StartStopButton.setText("Stop");
-                    StartStopButton.setEnabled(true);
-                    ApplyButton.setEnabled(true);
-                }
+        StartStopButton.addActionListener(e -> {
+            if (checkServiceControl()) {
+                stopServiceControl();
+            } else {
+                StartStopButton.setEnabled(false);
+                ApplyButton.setEnabled(false);
+                createServiceControl();
+                StartStopButton.setText("Stop");
+                StartStopButton.setEnabled(true);
+                ApplyButton.setEnabled(true);
             }
         });
 
@@ -156,35 +146,26 @@ public class SettingsWindow {
         filterEditor = new FilterEditor(this, filterX, filterY, filterH, filterW);
 
         // Добавление правила фильтрации
-        AddRule.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                win.setEnabled(false);
-                edited = -1;
-                filterEditor.editFilter(new MailFilter());
-            }
+        AddRule.addActionListener(e -> {
+            win.setEnabled(false);
+            edited = -1;
+            filterEditor.editFilter(new MailFilter());
         });
         // Удаление правила фильтрации
-        RemoveRule.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int selected = RulesList.getSelectedIndex();
-                if (selected >= 0) {
-                    RulesListModel.remove(selected);
-                    filters.remove(selected);
-                }
+        RemoveRule.addActionListener(e -> {
+            int selected = RulesList.getSelectedIndex();
+            if (selected >= 0) {
+                RulesListModel.remove(selected);
+                filters.remove(selected);
             }
         });
         // Удаление всех правил фильтрации
-        ClearRules.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+        ClearRules.addActionListener(e -> {
                 int result = JOptionPane.showConfirmDialog(null, "This action drop all filters. Continue?", "Warning", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
                 if (result == JOptionPane.OK_OPTION) {
                     RulesListModel.removeAllElements();
                     filters = new LinkedList<>();
                 }
-            }
         });
         // Редактирование фильтра по двойному щелчку
         RulesList.addMouseListener(new MouseAdapter() {
@@ -366,7 +347,7 @@ public class SettingsWindow {
             filterX = settings.getInteger(FILTER_EDITOR_X);
             filterY = settings.getInteger(FILTER_EDITOR_Y);
         } catch (JSONException ignore) {
-            System.out.println("DEBUG: " + ignore.getMessage());
+            logger.warning(ignore.getMessage());
             return false;
         }
         return true;

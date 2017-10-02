@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedList;
+import java.util.logging.Logger;
 
 /**
  * Хранит, загружает и сохраняет настройки
@@ -24,6 +25,7 @@ public class Settings {
     private Path settingsFile = Paths.get(System.getProperty("user.home"), ".ews_redirector.json");
     private JSONObject file;
     private TrayControl.TrayPopup popup;
+    private Logger logger = Logger.getLogger(this.getClass().getSimpleName());
 
     /**
      * Инициализация и чтение настроек
@@ -116,7 +118,7 @@ public class Settings {
                                     rawRule.getString(FilterRule.RULE_VALUE)
                             });
                         } catch (JSONException loadRuleFail) {
-                            System.out.println("DEBUG: " + loadRuleFail.getMessage());
+                            logger.warning(loadRuleFail.getMessage());
                         }
                     }
                     String[][] rawRulesArray = new String[rawRules.size()][];
@@ -128,11 +130,11 @@ public class Settings {
                             filterOperator
                     ));
                 } catch (JSONException filterLoadFail) {
-                    System.out.println("DEBUG: " + filterLoadFail.getMessage());
+                    logger.warning(filterLoadFail.getMessage());
                 }
             }
         } catch (JSONException ignore) {
-            System.out.println("DEBUG: " + ignore.getMessage());
+            logger.warning(ignore.getMessage());
         }
 
         return filters;
