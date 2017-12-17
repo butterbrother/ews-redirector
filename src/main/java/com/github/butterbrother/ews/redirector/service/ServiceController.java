@@ -2,7 +2,6 @@ package com.github.butterbrother.ews.redirector.service;
 
 import com.github.butterbrother.ews.redirector.filter.MailFilter;
 
-import javax.swing.*;
 import java.util.function.Consumer;
 
 /**
@@ -10,14 +9,18 @@ import java.util.function.Consumer;
  * Устанавливает соединение с EWS
  */
 public class ServiceController extends SafeStopService {
-    private ExchangeConnector connector = null;
+
+    private static final boolean BEFORE_STOP = true;
+    private static final boolean AFTER_STOP = false;
+
+    private ExchangeConnector connector;
     private PullEventsService pullEvents = null;
     private NewMessagesSearchService newMessages = null;
     private SendService send = null;
 
-    private JButton startStopButton;
-    private JButton applyButton;
-    private JTextField urlField;
+    private Consumer<Boolean> onStart;
+    private Consumer<Boolean> onStop;
+    private Consumer<String> onUpdateUrl;
     private String recipient;
     private boolean deleteRedirected;
     private Notificator notificator;
@@ -32,19 +35,19 @@ public class ServiceController extends SafeStopService {
             String url,
             boolean enableAuto,
             Notificator notificator,
-            JTextField urlField,
-            JButton startStopButton,
-            JButton applyButton,
+            Consumer<Boolean> onStart,
+            Consumer<Boolean> onStop,
+            Consumer<String> onUpdateUrl,
             boolean deleteRedirected,
             MailFilter[] filters
     ) {
-        this.startStopButton = startStopButton;
-        this.applyButton = applyButton;
         this.recipient = recipient;
         this.deleteRedirected = deleteRedirected;
         this.notificator = notificator;
         this.filters = filters;
-        this.urlField = urlField;
+        this.onStart = onStart;
+        this.onStop = onStop;
+        this.onUpdateUrl = onUpdateUrl;
 
         connector = new ExchangeConnector(domain, login, password, email, url, enableAuto);
         super.runService();
@@ -62,11 +65,11 @@ public class ServiceController extends SafeStopService {
                 pullEvents = new PullEventsService(connector, send.getQueue(), notificator);
                 newMessages = new NewMessagesSearchService(connector, notificator, send.getQueue());
 
-                startStopButton.setText("Stop");
+                onStart.accept(false);
                 while (super.isActive()) {
 
-                    if (connector.isEnableAutodiscover() && !urlField.isEnabled())
-                        urlField.setText(connector.getAutoDiscoverUrl());
+                    if (connector.isEnableAutodiscover())
+                        onUpdateUrl.accept(connector.getAutoDiscoverUrl());
 
                     try {
                         Thread.sleep(200);
@@ -96,8 +99,7 @@ public class ServiceController extends SafeStopService {
     public synchronized void safeStop() {
         super.safeStop();
 
-        startStopButton.setEnabled(false);
-        applyButton.setEnabled(false);
+        onStop.accept(BEFORE_STOP);
 
         Consumer<SafeStopService> st = srv -> {
             if (srv != null) {
@@ -115,8 +117,6 @@ public class ServiceController extends SafeStopService {
         st.accept(newMessages);
         st.accept(send);
 
-        startStopButton.setText("Start");
-        startStopButton.setEnabled(true);
-        applyButton.setEnabled(true);
+        onStop.accept(AFTER_STOP);
     }
 }

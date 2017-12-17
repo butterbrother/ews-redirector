@@ -2,7 +2,9 @@ package com.github.butterbrother.ews.redirector;
 
 import com.github.butterbrother.ews.redirector.filter.FilterRule;
 import com.github.butterbrother.ews.redirector.filter.MailFilter;
-import com.github.butterbrother.ews.redirector.graphics.TrayControl;
+import com.github.butterbrother.ews.redirector.service.Notificator;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -14,7 +16,8 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -24,13 +27,16 @@ import java.util.logging.Logger;
 public class Settings {
     private Path settingsFile = Paths.get(System.getProperty("user.home"), ".ews_redirector.json");
     private JSONObject file;
-    private TrayControl.TrayPopup popup;
+    private Notificator popup;
     private Logger logger = Logger.getLogger(this.getClass().getSimpleName());
 
     /**
      * Инициализация и чтение настроек
      */
-    public Settings(TrayControl.TrayPopup popup) {
+    public Settings(@Nullable String settingsPath, @NotNull Notificator popup) {
+        if (settingsPath != null)
+            settingsFile = Paths.get(settingsPath);
+
         this.popup = popup;
         if (Files.notExists(settingsFile)) {
             file = new JSONObject();
@@ -92,8 +98,8 @@ public class Settings {
      * Если произошла ошибка чтения/фильтров нет, то вернётся
      * пустой список
      */
-    public LinkedList<MailFilter> getAllFilters(String key) {
-        LinkedList<MailFilter> filters = new LinkedList<>();
+    public List<MailFilter> getAllFilters(String key) {
+        List<MailFilter> filters = new ArrayList<>();
         try {
             JSONObject rawFilters = file.getJSONObject(key);
             for (String name : rawFilters.keySet()) {
@@ -108,7 +114,7 @@ public class Settings {
                         filterOperator = MailFilter.OPERATOR_OR;
 
                     JSONArray rawFilterRules = rawFilter.getJSONArray(MailFilter.FILTER_RULES);
-                    LinkedList<String[]> rawRules = new LinkedList<>();
+                    List<String[]> rawRules = new ArrayList<>();
                     for (int i = 0; i < rawFilterRules.length(); ++i) {
                         try {
                             JSONObject rawRule = rawFilterRules.getJSONObject(i);
@@ -146,7 +152,7 @@ public class Settings {
      * @param key     Ключ в файле настроек
      * @param filters Фильтры сообщений
      */
-    public void writeAllFilters(String key, LinkedList<MailFilter> filters) {
+    public void writeAllFilters(String key, List<MailFilter> filters) {
         JSONObject rawFilters = new JSONObject();
         for (MailFilter filter : filters) {
             JSONObject rawFilter = new JSONObject();

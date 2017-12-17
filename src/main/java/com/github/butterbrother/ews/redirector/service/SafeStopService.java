@@ -52,4 +52,9 @@ public abstract class SafeStopService
         currentThread = new Thread(this);
         currentThread.start();
     }
+
+    public void join() throws InterruptedException {
+        if (currentThread != null)
+            currentThread.join();
+    }
 }

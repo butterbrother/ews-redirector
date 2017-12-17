@@ -11,7 +11,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 /**
@@ -23,15 +25,15 @@ public class SettingsWindow {
     private static final String KEY_WINDOW_WIDTH = "Settings window width";
     private static final String KEY_WINDOW_X = "Settings window X position";
     private static final String KEY_WINDOW_Y = "Settings window Y position";
-    private static final String DOMAIN = "Domain name";
-    private static final String EMAIL = "e-mail";
-    private static final String LOGIN = "User login";
-    private static final String PASSWORD = "User password";
-    private static final String AUTO_DISCOVER_URL = "Auto discover EWS service URL";
-    private static final String AUTO_DISCOVER_ENABLED = "Enable auto discover URL";
-    private static final String DELETE_REDIRECTED = "Enable delete redirected mail";
-    private static final String RECIPIENT_EMAIL = "Recipient e-mail";
-    private static final String FILTERS = "Email filters";
+    public static final String DOMAIN = "Domain name";
+    public static final String EMAIL = "e-mail";
+    public static final String LOGIN = "User login";
+    public static final String PASSWORD = "User password";
+    public static final String AUTO_DISCOVER_URL = "Auto discover EWS service URL";
+    public static final String AUTO_DISCOVER_ENABLED = "Enable auto discover URL";
+    public static final String DELETE_REDIRECTED = "Enable delete redirected mail";
+    public static final String RECIPIENT_EMAIL = "Recipient e-mail";
+    public static final String FILTERS = "Email filters";
     private static final String FILTER_EDITOR_HEIGHT = "Filter editor window height";
     private static final String FILTER_EDITOR_WIDTH = "Filter editor window width";
     private static final String FILTER_EDITOR_X = "Filter editor window X position";
@@ -77,7 +79,7 @@ public class SettingsWindow {
     // Расположение и размер окна фильтрации
     private int filterX = 1, filterY = 1, filterW = 640, filterH = 400;
     // Фильтры
-    private LinkedList<MailFilter> filters;
+    private List<MailFilter> filters;
     private DefaultListModel<String> RulesListModel;
     // Редактор фильтров
     private FilterEditor filterEditor;
@@ -164,7 +166,7 @@ public class SettingsWindow {
                 int result = JOptionPane.showConfirmDialog(null, "This action drop all filters. Continue?", "Warning", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
                 if (result == JOptionPane.OK_OPTION) {
                     RulesListModel.removeAllElements();
-                    filters = new LinkedList<>();
+                    filters = new ArrayList<>();
                 }
         });
         // Редактирование фильтра по двойному щелчку
@@ -223,6 +225,30 @@ public class SettingsWindow {
     private void createServiceControl() {
         MailFilter[] mailFilters = new MailFilter[filters.size()];
         filters.toArray(mailFilters);
+
+        // Действие, вызываемое сервисом в начале своей работы
+        Consumer<Boolean> onStart = n -> StartStopButton.setText("Stop");
+
+        // Действия, вызываемые сервисом по окончанию работы.
+        // isBeforeStop - действие вызвано до процесса остановки
+        Consumer<Boolean> onStop = isBeforeStop -> {
+            if (isBeforeStop) {
+                StartStopButton.setEnabled(false);
+                ApplyButton.setEnabled(false);
+            } else {
+                StartStopButton.setText("Start");
+                StartStopButton.setEnabled(true);
+                ApplyButton.setEnabled(true);
+            }
+        };
+
+        // Действие, выполняемое сервисом при получении сведений о ews url,
+        // в данном случае - обновление этого url
+        Consumer<String> onUpdateUrl = url -> {
+            if (!URLInput.isEnabled())
+                URLInput.setText(url);
+        };
+
         controller = new ServiceController(
                 settings.getString(DOMAIN),
                 settings.getString(EMAIL),
@@ -232,9 +258,9 @@ public class SettingsWindow {
                 settings.getString(AUTO_DISCOVER_URL),
                 settings.getBoolean(AUTO_DISCOVER_ENABLED),
                 popup,
-                URLInput,
-                StartStopButton,
-                ApplyButton,
+                onStart,
+                onStop,
+                onUpdateUrl,
                 settings.getBoolean(DELETE_REDIRECTED),
                 mailFilters
         );
